@@ -21,6 +21,7 @@ fn main() {
                 ui.add_tab(&mut tab, Tabs::Home, "Home");
                 ui.add_tab(&mut tab, Tabs::TabOne, "TabOne");
                 ui.add_tab(&mut tab, Tabs::TabTwo, "TabTwo");
+                ui.cap_tabs();
             });
 
             match tab {

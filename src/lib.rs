@@ -1,5 +1,5 @@
 use egui::{
-    NumExt, Response, Rounding, Sense, Shape, Stroke, TextStyle, Ui, Vec2, Widget,
+    Color32, NumExt, Response, Rounding, Sense, Shape, Stroke, TextStyle, Ui, Vec2, Widget,
     WidgetInfo, WidgetText, WidgetType,
 };
 
@@ -15,6 +15,8 @@ pub trait TabWidgetExt {
         selected_value: Value,
         text: impl Into<WidgetText>,
     ) -> Response;
+
+    fn cap_tabs(&mut self);
 }
 
 impl TabWidgetExt for Ui {
@@ -31,6 +33,17 @@ impl TabWidgetExt for Ui {
         }
         response
     }
+
+    fn cap_tabs(&mut self) {
+        let rect = self.available_rect_before_wrap();
+        let stroke = self.style().visuals.window_stroke();
+        let rect = rect.expand(stroke.width);
+        let v = tab_edge_vect(self);
+        self.painter().add(Shape::line_segment(
+            [rect.left_bottom() - v, rect.right_bottom() + v],
+            stroke,
+        ));
+    }
 }
 
 impl TabWidget {
@@ -40,6 +53,11 @@ impl TabWidget {
             text: text.into(),
         }
     }
+}
+
+fn tab_edge_vect(ui: &mut Ui) -> Vec2 {
+    let button_padding = ui.spacing().button_padding;
+    Vec2::X * button_padding.x / 1.25
 }
 
 impl Widget for TabWidget {
@@ -106,7 +124,7 @@ impl Widget for TabWidget {
             }
 
             // Draw the bottom bit of the tab
-            let v = Vec2::X * button_padding.x/1.25;
+            let v = tab_edge_vect(ui);
             let r = rect.expand(stroke.width);
             ui.painter().add(Shape::line_segment(
                 [r.right_bottom(), r.right_bottom() + v],
