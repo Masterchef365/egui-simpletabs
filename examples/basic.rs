@@ -1,3 +1,4 @@
+use egui::global_theme_preference_buttons;
 use egui_simpletabs::TabWidgetExt;
 
 #[derive(Default, Clone, Copy, PartialEq)]
@@ -32,6 +33,7 @@ fn main() {
                         ui.text_edit_singleline(&mut name)
                             .labelled_by(name_label.id);
                     });
+                    global_theme_preference_buttons(ui);
                 }
                 Tabs::TabOne => {
                     ui.add(egui::Slider::new(&mut age, 0..=120).text("age"));
