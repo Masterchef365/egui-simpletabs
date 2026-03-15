@@ -97,18 +97,15 @@ impl Widget for TabWidget {
                 ui.style().visuals.window_stroke()
             };
 
-            let mut round = visuals.rounding;
-            round.se = 0.0;
-            round.sw = 0.0;
-
             ui.painter().rect_stroke(
                 rect,
-                round,
+                0.0,
                 if response.hovered() && !selected {
                     Stroke::new(1.0, ui.style().visuals.text_color())
                 } else {
                     stroke
                 },
+                egui::StrokeKind::Outside,
             );
 
             // Mask over the bottom stroke
