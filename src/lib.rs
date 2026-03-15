@@ -192,7 +192,7 @@ pub const fn first_prefix_exp() -> i32 {
 
 pub fn to_metric_prefix(value: f64, unit: impl std::fmt::Display) -> String {
     let exponent = (value.abs().log10() / 3.0).floor() as i32 * 3;
-    let idx = (exponent - dbg!(first_prefix_exp())) / 3;
+    let idx = (exponent - first_prefix_exp()) / 3;
 
     let prefix = (idx >= 0).then(|| idx as usize).and_then(|i| PREFIXES.get(i));
 
@@ -203,30 +203,31 @@ pub fn to_metric_prefix(value: f64, unit: impl std::fmt::Display) -> String {
     }
 }
 
-/*
-/// Returns (value, unit) for the given string
+/// Returns (value, prefix, unit) for the given string
 pub fn from_metric_prefix(s: &str) -> Result<(f64, &str), ()> {
-    let prefixes = [
-        "y", "z", "a", "f", "p", "n", "μ", "m", "", "k", "M", "G", "T", "P", "E", "Z", "Y",
-    ];
+    let mut parts = s.split_whitespace();
 
-    let first_prefix_exp = -24;
+    let value_part = parts.next().ok_or(())?;
+    let value: f64 = value_part.parse().map_err(|_| ())?;
 
-    let exponent = (value.abs().log10() / 3.0).floor() as i32 * 3;
-    let idx = (exponent - first_prefix_exp) / 3;
+    let prefix_and_unit = parts.next().ok_or(())?;
+    let (prefix, unit) = prefix_and_unit.split_at(1);
 
-    let prefix = (idx >= 0).then(|| idx as usize).and_then(|i| prefixes.get(i));
+    let prefix_idx = PREFIXES.iter().position(|p| p == &prefix).ok_or(())?;
+    let exponent = first_prefix_exp() + prefix_idx as i32 * 3;
+    let value = value * 10_f64.powi(exponent);
 
-    if let Some(prefix) = prefix {
-        format!("{:.0} {prefix}{unit}", value / 10_f64.powi(exponent))
-    } else {
-        format!("{:.0} {unit}", value) // Fallback in case exponent is out of range
-    }
+    Ok((value, unit))
 }
-*/
 
 #[test]
 fn test_to_metric_prefix() {
     assert_eq!(to_metric_prefix(1000.0, 'V'), "1 kV");
     assert_eq!(to_metric_prefix(0.001, "Ohm"), "1 mOhm");
+}
+
+#[test]
+fn test_from_metric_prefix() {
+    assert_eq!((1000.0, "V"), from_metric_prefix("1 kV").unwrap());
+    assert_eq!((0.001, "Ohm"), from_metric_prefix("1 mOhm").unwrap());
 }
