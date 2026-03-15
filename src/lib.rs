@@ -1,5 +1,6 @@
 use egui::{
-    Color32, NumExt, Response, RichText, Rounding, Sense, Shape, Stroke, TextStyle, Ui, Vec2, Widget, WidgetInfo, WidgetText, WidgetType
+    Color32, NumExt, Response, RichText, Sense, Shape, Stroke, TextStyle, Ui, Vec2,
+    Widget, WidgetInfo, WidgetText, WidgetType,
 };
 
 pub struct TabWidget {
@@ -157,9 +158,7 @@ pub fn play_pause_button(ui: &mut Ui, paused: &mut bool) {
 
     let text = RichText::new(text).color(Color32::WHITE);
 
-    let button = egui::Button::new(text)
-        .fill(color)
-        .min_size(BUTTON_SIZE);
+    let button = egui::Button::new(text).fill(color).min_size(BUTTON_SIZE);
 
     let resp = ui.add(button).on_hover_text(hover_text);
     if resp.clicked() {
@@ -183,4 +182,29 @@ pub fn serious_button(ui: &mut Ui, symbol: &str) -> egui::Response {
     let button = egui::Button::new(text).min_size(BUTTON_SIZE);
 
     ui.add(button)
+}
+
+pub fn to_metric_prefix(value: f64, unit: impl std::fmt::Display) -> String {
+    let prefixes = [
+        "y", "z", "a", "f", "p", "n", "μ", "m", "", "k", "M", "G", "T", "P", "E", "Z", "Y",
+    ];
+
+    let first_prefix_exp = -24;
+
+    let exponent = (value.abs().log10() / 3.0).floor() as i32 * 3;
+    let idx = (exponent - first_prefix_exp) / 3;
+
+    let prefix = (idx >= 0).then(|| idx as usize).and_then(|i| prefixes.get(i));
+
+    if let Some(prefix) = prefix {
+        format!("{:.0} {prefix}{unit}", value / 10_f64.powi(exponent))
+    } else {
+        format!("{:.0} {unit}", value) // Fallback in case exponent is out of range
+    }
+}
+
+#[test]
+fn test_to_metric_prefix() {
+    assert_eq!(to_metric_prefix(1000.0, 'V'), "1 kV");
+    assert_eq!(to_metric_prefix(0.001, "Ohm"), "1 mOhm");
 }
