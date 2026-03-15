@@ -215,7 +215,11 @@ pub fn to_metric_prefix(value: f64, unit: impl std::fmt::Display) -> String {
 
 /// Returns value for the given unit and string
 pub fn from_metric_prefix<'s>(s: &'s str, unit: &str) -> Result<f64, ()> {
-    let s = s.trim().trim_end_matches(unit);
+    let mut s = s.trim();
+
+    if s.ends_with(unit) {
+        s = &s[0..s.len()-unit.len()];
+    }
 
     let value_end = s
         .chars()
@@ -260,6 +264,8 @@ fn test_to_metric_prefix() {
     assert_eq!(to_metric_prefix(1100.0, "N"), "1.100 kN");
     assert_eq!(to_metric_prefix(1000.0, 'V'), "1.000 kV");
     assert_eq!(to_metric_prefix(0.001, "Ohm"), "1.000 mOhm");
+    assert_eq!(to_metric_prefix(1.000, "m"), "1.000 m");
+    assert_eq!(to_metric_prefix(0.001, "m"), "1.000 mm");
 }
 
 #[test]
@@ -271,4 +277,5 @@ fn test_from_metric_prefix() {
     assert_eq!(from_metric_prefix("1kJ", "J").unwrap(), 1000.0);
     assert_eq!(from_metric_prefix("1uJ", "J").unwrap(), 1e-6);
     assert_eq!(from_metric_prefix("1μJ", "J").unwrap(), 1e-6);
+    assert_eq!(from_metric_prefix("1mm", "m").unwrap(), 1e-3);
 }
