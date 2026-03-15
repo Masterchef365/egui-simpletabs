@@ -187,6 +187,9 @@ pub fn serious_button(ui: &mut Ui, symbol: &str) -> egui::Response {
 const PREFIXES: [&'static str; 17] = [
     "y", "z", "a", "f", "p", "n", "μ", "m", "", "k", "M", "G", "T", "P", "E", "Z", "Y",
 ];
+const CRUDE_PREFIXES: [&'static str; 17] = [
+    "y", "z", "a", "f", "p", "n", "u", "m", "", "k", "M", "G", "T", "P", "E", "Z", "Y",
+];
 
 pub const fn first_prefix_exp() -> i32 {
     -3 * (PREFIXES.len() as i32 - 1) / 2
@@ -224,7 +227,12 @@ pub fn from_metric_prefix<'s>(s: &'s str, unit: &str) -> Result<f64, ()> {
 
     let value: f64 = value_part.parse().map_err(|_| ())?;
 
-    let prefix_idx = PREFIXES.iter().position(|p| p == &prefix);
+    let find_prefix = |p: &&str| p == &prefix;
+    let prefix_idx = PREFIXES
+        .iter()
+        .position(find_prefix)
+        .or_else(|| CRUDE_PREFIXES.iter().position(find_prefix));
+
     let exponent = match prefix_idx {
         Some(idx) => first_prefix_exp() + idx as i32 * 3,
         None => 0,
@@ -250,4 +258,6 @@ fn test_from_metric_prefix() {
     assert_eq!(from_metric_prefix("1Rad", "Rad").unwrap(), 1.0);
     assert_eq!(from_metric_prefix("1m", "J").unwrap(), 0.001);
     assert_eq!(from_metric_prefix("1kJ", "J").unwrap(), 1000.0);
+    assert_eq!(from_metric_prefix("1uJ", "J").unwrap(), 1e-6);
+    assert_eq!(from_metric_prefix("1μJ", "J").unwrap(), 1e-6);
 }
