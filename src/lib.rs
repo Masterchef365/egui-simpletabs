@@ -219,7 +219,7 @@ pub fn from_metric_prefix<'s>(s: &'s str, unit: &str) -> Result<f64, ()> {
 
     let value_end = s
         .chars()
-        .position(|c| !c.is_digit(10) || ['.', 'e', '+', '-'].contains(&c))
+        .position(|c| !(c.is_digit(10) || ['.', 'e', '+', '-'].contains(&c)))
         .unwrap_or_else(|| s.chars().count());
 
     let (value_part, prefix_part) = s.split_at(value_end);
@@ -240,6 +240,17 @@ pub fn from_metric_prefix<'s>(s: &'s str, unit: &str) -> Result<f64, ()> {
     let value = value * 10_f64.powi(exponent);
 
     Ok(value)
+}
+
+pub fn metric_prefix_dragvalue<'a>(drag: egui::DragValue<'a>, unit: &'static str) -> egui::DragValue<'a> {
+    drag
+        .custom_parser(move |s| from_metric_prefix(s, unit).ok())
+        .custom_formatter(move |value, _| to_metric_prefix(value, unit))
+}
+
+pub fn edit_metric_f64<'v>(value: &'v mut f64, unit: &'static str) -> egui::DragValue<'v> {
+    let speed = *value / 1000.0;
+    metric_prefix_dragvalue(egui::DragValue::new(value).speed(speed), unit)
 }
 
 #[test]
