@@ -7,4 +7,4 @@ edition = "2021"
 egui = "0.29.1"
 
 [dev-dependencies]
-eframe = "0.29.1"
+eframe = "0.33.2"

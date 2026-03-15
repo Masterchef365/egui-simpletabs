@@ -1,6 +1,5 @@
 use egui::{
-    Color32, NumExt, Response, Rounding, Sense, Shape, Stroke, TextStyle, Ui, Vec2, Widget,
-    WidgetInfo, WidgetText, WidgetType,
+    Color32, NumExt, Response, RichText, Rounding, Sense, Shape, Stroke, TextStyle, Ui, Vec2, Widget, WidgetInfo, WidgetText, WidgetType
 };
 
 pub struct TabWidget {
@@ -141,4 +140,34 @@ impl Widget for TabWidget {
 
         response
     }
+}
+
+pub fn play_pause_button(ui: &mut Ui, paused: &mut bool) {
+    let text = match *paused {
+        true => "   ▶   ",
+        false => "   ⏸   ",
+    };
+
+    let color = match *paused {
+        true => Color32::DARK_RED,
+        false => Color32::from_rgb(79, 200, 0),
+    };
+
+    let text = RichText::new(text).color(Color32::WHITE);
+
+    let button = egui::Button::new(text)
+        .fill(color)
+        .min_size(egui::Vec2::new(0.0, 40.0));
+
+    if ui.add(button).clicked() {
+        *paused = !*paused;
+    }
+}
+
+pub fn single_step_button(ui: &mut Ui) -> egui::Response {
+    let text = RichText::new("   ⏭   ").color(Color32::WHITE);
+
+    let button = egui::Button::new(text).min_size(egui::Vec2::new(0.0, 40.0));
+
+    ui.add(button)
 }
