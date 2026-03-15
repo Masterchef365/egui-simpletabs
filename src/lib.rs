@@ -1,6 +1,6 @@
 use egui::{
-    Color32, NumExt, Response, RichText, Sense, Shape, Stroke, TextStyle, Ui, Vec2,
-    Widget, WidgetInfo, WidgetText, WidgetType,
+    Color32, NumExt, Response, RichText, Sense, Shape, Stroke, TextStyle, Ui, Vec2, Widget,
+    WidgetInfo, WidgetText, WidgetType,
 };
 
 pub struct TabWidget {
@@ -184,50 +184,70 @@ pub fn serious_button(ui: &mut Ui, symbol: &str) -> egui::Response {
     ui.add(button)
 }
 
-const PREFIXES: [&'static str; 17] = ["y", "z", "a", "f", "p", "n", "μ", "m", "", "k", "M", "G", "T", "P", "E", "Z", "Y"];
+const PREFIXES: [&'static str; 17] = [
+    "y", "z", "a", "f", "p", "n", "μ", "m", "", "k", "M", "G", "T", "P", "E", "Z", "Y",
+];
 
 pub const fn first_prefix_exp() -> i32 {
     -3 * (PREFIXES.len() as i32 - 1) / 2
 }
 
 pub fn to_metric_prefix(value: f64, unit: impl std::fmt::Display) -> String {
-    let exponent = (value.abs().log10() / 3.0).floor() as i32 * 3;
+    let exp10 = (value.abs().log10() / 3.0).floor() as i32;
+
+    let exponent = exp10 * 3;
+
     let idx = (exponent - first_prefix_exp()) / 3;
 
-    let prefix = (idx >= 0).then(|| idx as usize).and_then(|i| PREFIXES.get(i));
+    let prefix = (idx >= 0)
+        .then(|| idx as usize)
+        .and_then(|i| PREFIXES.get(i));
 
     if let Some(prefix) = prefix {
-        format!("{:.0} {prefix}{unit}", value / 10_f64.powi(exponent))
+        format!("{:.3} {prefix}{unit}", value / 10_f64.powi(exponent))
     } else {
-        format!("{:.0} {unit}", value) // Fallback in case exponent is out of range
+        format!("{:.3} {unit}", value) // Fallback in case exponent is out of range
     }
 }
 
-/// Returns (value, prefix, unit) for the given string
-pub fn from_metric_prefix(s: &str) -> Result<(f64, &str), ()> {
-    let mut parts = s.split_whitespace();
+/// Returns value for the given unit and string
+pub fn from_metric_prefix<'s>(s: &'s str, unit: &str) -> Result<f64, ()> {
+    let s = s.trim().trim_end_matches(unit);
 
-    let value_part = parts.next().ok_or(())?;
+    let value_end = s
+        .chars()
+        .position(|c| !c.is_digit(10) || ['.', 'e', '+', '-'].contains(&c))
+        .unwrap_or_else(|| s.chars().count());
+
+    let (value_part, prefix_part) = s.split_at(value_end);
+    let prefix = prefix_part.trim();
+
     let value: f64 = value_part.parse().map_err(|_| ())?;
 
-    let prefix_and_unit = parts.next().ok_or(())?;
-    let (prefix, unit) = prefix_and_unit.split_at(1);
-
-    let prefix_idx = PREFIXES.iter().position(|p| p == &prefix).ok_or(())?;
-    let exponent = first_prefix_exp() + prefix_idx as i32 * 3;
+    let prefix_idx = PREFIXES.iter().position(|p| p == &prefix);
+    let exponent = match prefix_idx {
+        Some(idx) => first_prefix_exp() + idx as i32 * 3,
+        None => 0,
+    };
     let value = value * 10_f64.powi(exponent);
 
-    Ok((value, unit))
+    Ok(value)
 }
 
 #[test]
 fn test_to_metric_prefix() {
-    assert_eq!(to_metric_prefix(1000.0, 'V'), "1 kV");
-    assert_eq!(to_metric_prefix(0.001, "Ohm"), "1 mOhm");
+    assert_eq!(to_metric_prefix(1.000, "g"), "1.000 g");
+    assert_eq!(to_metric_prefix(10.0, "s"), "10.000 s");
+    assert_eq!(to_metric_prefix(1100.0, "N"), "1.100 kN");
+    assert_eq!(to_metric_prefix(1000.0, 'V'), "1.000 kV");
+    assert_eq!(to_metric_prefix(0.001, "Ohm"), "1.000 mOhm");
 }
 
 #[test]
 fn test_from_metric_prefix() {
-    assert_eq!((1000.0, "V"), from_metric_prefix("1 kV").unwrap());
-    assert_eq!((0.001, "Ohm"), from_metric_prefix("1 mOhm").unwrap());
+    assert_eq!(from_metric_prefix("1 kV", "V").unwrap(), 1000.0);
+    assert_eq!(from_metric_prefix("1 mOhm", "Ohm").unwrap(), 0.001);
+    assert_eq!(from_metric_prefix("1Rad", "Rad").unwrap(), 1.0);
+    assert_eq!(from_metric_prefix("1m", "J").unwrap(), 0.001);
+    assert_eq!(from_metric_prefix("1kJ", "J").unwrap(), 1000.0);
 }
