@@ -117,7 +117,7 @@ impl Widget for TabWidget {
                 mask = mask.expand2(egui::Vec2::Y * stroke.width);
 
                 ui.painter()
-                    .rect_filled(mask, Rounding::ZERO, ui.style().visuals.window_fill());
+                    .rect_filled(mask, 0.0, ui.style().visuals.window_fill());
             }
 
             // Draw the bottom bit of the tab
@@ -184,7 +184,28 @@ pub fn serious_button(ui: &mut Ui, symbol: &str) -> egui::Response {
     ui.add(button)
 }
 
+const PREFIXES: [&'static str; 17] = ["y", "z", "a", "f", "p", "n", "μ", "m", "", "k", "M", "G", "T", "P", "E", "Z", "Y"];
+
+pub const fn first_prefix_exp() -> i32 {
+    -3 * (PREFIXES.len() as i32 - 1) / 2
+}
+
 pub fn to_metric_prefix(value: f64, unit: impl std::fmt::Display) -> String {
+    let exponent = (value.abs().log10() / 3.0).floor() as i32 * 3;
+    let idx = (exponent - dbg!(first_prefix_exp())) / 3;
+
+    let prefix = (idx >= 0).then(|| idx as usize).and_then(|i| PREFIXES.get(i));
+
+    if let Some(prefix) = prefix {
+        format!("{:.0} {prefix}{unit}", value / 10_f64.powi(exponent))
+    } else {
+        format!("{:.0} {unit}", value) // Fallback in case exponent is out of range
+    }
+}
+
+/*
+/// Returns (value, unit) for the given string
+pub fn from_metric_prefix(s: &str) -> Result<(f64, &str), ()> {
     let prefixes = [
         "y", "z", "a", "f", "p", "n", "μ", "m", "", "k", "M", "G", "T", "P", "E", "Z", "Y",
     ];
@@ -202,6 +223,7 @@ pub fn to_metric_prefix(value: f64, unit: impl std::fmt::Display) -> String {
         format!("{:.0} {unit}", value) // Fallback in case exponent is out of range
     }
 }
+*/
 
 #[test]
 fn test_to_metric_prefix() {
