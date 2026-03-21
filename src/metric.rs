@@ -3,7 +3,7 @@ const PREFIXES: [&'static str; 17] = [
     "y", "z", "a", "f", "p", "n", "μ", "m", "", "k", "M", "G", "T", "P", "E", "Z", "Y",
 ];
 
-/// Prefixes which can be entered and are equivalent (easier to be typed)
+/// Prefixes which can be entered and are equivalent (easier to type)
 const CRUDE_PREFIXES: [&'static str; 17] = [
     "y", "z", "a", "f", "p", "n", "u", "m", "", "k", "M", "G", "T", "P", "E", "Z", "Y",
 ];
