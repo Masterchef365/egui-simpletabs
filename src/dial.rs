@@ -13,10 +13,9 @@ fn set(get_set_value: &mut GetSetValue<'_>, value: f64) {
 
 pub struct Dial<'a> {
     get_set_value: GetSetValue<'a>,
-    /// Change in angle (in radians) per change in
+    /// Change in angle (in radians) per change in mouse position
     pub mouse_sensitivity: f64,
-    /// Visual angle (in radians) at which the dial is zeroed. Note that this is added to the
-    /// logical angle.
+    /// Angle (in radians) at which the dial is at the "origin".
     pub origin_angle: f64,
     /// Value at the origin
     pub origin_value: f64,
@@ -44,16 +43,17 @@ impl<'a> Dial<'a> {
     }
 
     pub fn from_get_set(get_set_value: impl 'a + FnMut(Option<f64>) -> f64) -> Self {
+        let knob_radius: f32 = 25.0;
         Self {
             get_set_value: Box::new(get_set_value),
-            mouse_sensitivity: 1.0,
+            mouse_sensitivity: std::f64::consts::TAU / knob_radius as f64,
             origin_angle: std::f64::consts::FRAC_PI_2,
             origin_value: 0.0,
             value_per_angle: 1.0,
             min_value: None,
             max_value: None,
             desired_size: Vec2::new(200.0, 100.0),
-            knob_radius: 25.0,
+            knob_radius,
         }
     }
 
@@ -118,10 +118,14 @@ impl<'a> Dial<'a> {
             .value_per_radian(value_range / usable_radians)
     }
 
-    /// Returns the current angle
-    fn angle(&mut self) -> f64 {
-        let value = get(&mut self.get_set_value);
-        value / self.value_per_angle
+    /// Returns the angle for a given value
+    fn value_for_angle(&mut self, angle: f64) -> f64 {
+        (angle - self.origin_angle) * self.value_per_angle + self.origin_value
+    }
+
+    /// Returns the angle for a given value
+    fn angle_for_value(&mut self, value: f64) -> f64 {
+        (value - self.origin_value) / self.value_per_angle + self.origin_angle
     }
 }
 
@@ -130,7 +134,24 @@ impl Widget for Dial<'_> {
         let resp = ui.allocate_response(self.desired_size, egui::Sense::drag());
 
         let center = resp.rect.center();
-        draw_knob(ui, center, self.angle(), self.knob_radius);
+        let value = get(&mut self.get_set_value);
+        let angle = self.angle_for_value(value);
+        draw_knob(ui, center, angle, self.knob_radius);
+
+        if resp.dragged() {
+            let delta = resp.drag_delta().y + resp.drag_delta().x;
+            let mut new = value + delta as f64 * self.mouse_sensitivity * self.value_per_angle;
+
+            if let Some(max) = self.max_value {
+                new = new.max(max);
+            }
+
+            if let Some(min) = self.min_value {
+                new = new.min(min);
+            }
+
+            set(&mut self.get_set_value, new);
+        }
 
         resp
     }
@@ -138,8 +159,10 @@ impl Widget for Dial<'_> {
 
 fn draw_knob(ui: &Ui, center: Pos2, angle: f64, radius: f32) {
     let stroke = ui.style().visuals.widgets.active.fg_stroke;
-
     ui.painter().circle_stroke(center, radius, stroke.clone());
+
+    let fill = ui.style().visuals.widgets.noninteractive.bg_stroke.color;
+    ui.painter().circle_filled(center, radius, fill);
 
     let f = |r: f32| center + Vec2::angled(angle as _) * r;
 
