@@ -1,5 +1,5 @@
 use egui::global_theme_preference_buttons;
-use egui_simpletabs::TabWidgetExt;
+use egui_simpletabs::tabs::TabWidgetExt;
 
 #[derive(Default, Clone, Copy, PartialEq)]
 enum Tabs {

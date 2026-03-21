@@ -1,14 +1,19 @@
+/// Prefixes which will be displayed
 const PREFIXES: [&'static str; 17] = [
     "y", "z", "a", "f", "p", "n", "μ", "m", "", "k", "M", "G", "T", "P", "E", "Z", "Y",
 ];
+
+/// Prefixes which can be entered and are equivalent (easier to be typed)
 const CRUDE_PREFIXES: [&'static str; 17] = [
     "y", "z", "a", "f", "p", "n", "u", "m", "", "k", "M", "G", "T", "P", "E", "Z", "Y",
 ];
 
-pub const fn first_prefix_exp() -> i32 {
+/// Calculate the exponent of the first prefix
+const fn first_prefix_exp() -> i32 {
     -3 * (PREFIXES.len() as i32 - 1) / 2
 }
 
+/// Display the given value with the given unit, appropriately prefixed according to magnitude
 pub fn to_metric_prefix(value: f64, unit: impl std::fmt::Display) -> String {
     let exp10 = (value.abs().log10() / 3.0).floor() as i32;
 
@@ -27,7 +32,7 @@ pub fn to_metric_prefix(value: f64, unit: impl std::fmt::Display) -> String {
     }
 }
 
-/// Returns value for the given unit and string
+/// Extracts the float value for the string (using the given unit)
 pub fn from_metric_prefix<'s>(s: &'s str, unit: &str) -> Result<f64, ()> {
     let mut s = s.trim();
 
@@ -60,12 +65,14 @@ pub fn from_metric_prefix<'s>(s: &'s str, unit: &str) -> Result<f64, ()> {
     Ok(value)
 }
 
+/// Adds parsers and formatters to a DragValue for the metric prefix
 pub fn metric_prefix_dragvalue<'a>(drag: egui::DragValue<'a>, unit: &'static str) -> egui::DragValue<'a> {
     drag
         .custom_parser(move |s| from_metric_prefix(s, unit).ok())
         .custom_formatter(move |value, _| to_metric_prefix(value, unit))
 }
 
+/// Shorthand for metric_prefix_dragvalue() with the default DragValue
 pub fn edit_metric_f64<'v>(value: &'v mut f64, unit: &'static str) -> egui::DragValue<'v> {
     let speed = *value / 1000.0;
     metric_prefix_dragvalue(egui::DragValue::new(value).speed(speed), unit)
