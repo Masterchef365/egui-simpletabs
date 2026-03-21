@@ -139,7 +139,7 @@ impl Widget for Dial<'_> {
         draw_knob(ui, center, angle, self.knob_radius);
 
         if resp.dragged() {
-            let delta = resp.drag_delta().y + resp.drag_delta().x;
+            let delta = resp.drag_delta().y;
             let mut new = value + delta as f64 * self.mouse_sensitivity * self.value_per_angle;
 
             if let Some(max) = self.max_value {
