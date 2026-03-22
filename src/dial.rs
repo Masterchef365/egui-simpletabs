@@ -202,15 +202,20 @@ impl<'a> Dial<'a> {
 
 impl Widget for Dial<'_> {
     fn ui(mut self, ui: &mut Ui) -> Response {
-        // Response
-        let resp = ui.allocate_response(self.desired_size, egui::Sense::drag());
-        let stroke = ui.style().visuals.widgets.active.fg_stroke;
+        // Background response
+        let background_area = Rect::from_min_size(ui.cursor().min, self.desired_size);
 
         // Knob
-        let center = resp.rect.center();
+        let center = background_area.center();
         let mut value = get(&mut self.get_set_value);
         let angle = self.angle_for_value(value);
         draw_knob(ui, center, angle, self.knob_radius);
+
+        let knob_rect = Rect::from_center_size(center, Vec2::splat((self.knob_radius + self.markings_offset) * 2.0));
+
+        let knob_resp = ui.allocate_rect(knob_rect, egui::Sense::click_and_drag());
+
+        let stroke = ui.style().visuals.widgets.active.fg_stroke;
 
         // Arc around knob
         if let (Some(min), Some(max), true) = (self.min_value, self.max_value, self.show_livezone) {
@@ -226,12 +231,12 @@ impl Widget for Dial<'_> {
         }
 
         // Interaction with knob
-        if let Some(mouse_pos) = resp.interact_pointer_pos()
-            && resp.dragged()
+        if let Some(mouse_pos) = knob_resp.interact_pointer_pos()
+            && knob_resp.dragged()
         {
             let delta = self
                 .drag_mode
-                .calculate_delta(mouse_pos - center, resp.drag_delta());
+                .calculate_delta(mouse_pos - center, knob_resp.drag_delta());
             value += delta as f64 * self.mouse_sensitivity * self.value_per_angle;
 
             if let Some(max) = self.max_value {
@@ -257,9 +262,10 @@ impl Widget for Dial<'_> {
             let pos_angle = self.angle_for_value(position.value);
 
             // Snap
-            if let Some(snap_thresh) = position.snap {
+            if let Some(snap_thresh) = position.snap && knob_resp.dragged() {
                 if (pos_angle - angle).abs() < snap_thresh as f64 {
-                    set(&mut self.get_set_value, position.value);
+                    value = position.value;
+                    set(&mut self.get_set_value, value);
                 }
             }
 
@@ -288,12 +294,13 @@ impl Widget for Dial<'_> {
 
                 let label_resp = ui.allocate_rect(rect, Sense::click());
                 if label_resp.double_clicked() {
-                    set(&mut self.get_set_value, position.value);
+                    value = position.value;
+                    set(&mut self.get_set_value, value);
                 }
             }
         }
 
-        resp
+        knob_resp
     }
 }
 
