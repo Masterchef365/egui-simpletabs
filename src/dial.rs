@@ -1,6 +1,6 @@
 use std::ops::RangeInclusive;
 
-use egui::{Pos2, Response, RichText, Ui, Vec2, Widget, emath::Numeric};
+use egui::{Pos2, Rect, Response, RichText, Ui, Vec2, Widget, WidgetText, emath::Numeric};
 
 use crate::utils::circular_arc_stroke;
 
@@ -56,9 +56,11 @@ pub struct Dial<'a> {
     pub drag_mode: DragMode,
     /// Display a circular arc around the active area of the dial,
     /// at the specific distance from the knob (if any)
-    pub show_livezone: Option<f32>,
+    pub show_livezone: bool,
     /// Marked dial positions
     pub positions: Vec<DialPosition>,
+    /// How far away any markings are fromt he dial
+    pub markings_offset: f32,
 }
 
 impl<'a> Dial<'a> {
@@ -85,8 +87,9 @@ impl<'a> Dial<'a> {
             desired_size: Vec2::new(200.0, 100.0),
             knob_radius,
             drag_mode: DragMode::default(),
-            show_livezone: Some(5.0),
+            show_livezone: true,
             positions: Vec::new(),
+            markings_offset: 5.0,
         }
     }
 
@@ -156,8 +159,14 @@ impl<'a> Dial<'a> {
 
     /// Display a circular arc around the active area of the dial,
     /// at the specific distance from the knob (if any)
-    pub fn show_livezone(mut self, livezone: Option<f32>) -> Self {
+    pub fn show_livezone(mut self, livezone: bool) -> Self {
         self.show_livezone = livezone;
+        self
+    }
+
+    /// How far away any markings are fromt he dial
+    pub fn markings_offset(mut self, offset: f32) -> Self {
+        self.markings_offset = offset;
         self
     }
 
@@ -179,12 +188,12 @@ impl<'a> Dial<'a> {
     }
 
     /// Returns the angle for a given value
-    fn value_for_angle(&mut self, angle: f64) -> f64 {
+    fn value_for_angle(&self, angle: f64) -> f64 {
         (angle - self.origin_angle) * self.value_per_angle + self.origin_value
     }
 
     /// Returns the angle for a given value
-    fn angle_for_value(&mut self, value: f64) -> f64 {
+    fn angle_for_value(&self, value: f64) -> f64 {
         (value - self.origin_value) / self.value_per_angle + self.origin_angle
     }
 }
@@ -202,13 +211,11 @@ impl Widget for Dial<'_> {
         draw_knob(ui, center, angle, self.knob_radius);
 
         // Arc around knob
-        if let (Some(min), Some(max), Some(dist)) =
-            (self.min_value, self.max_value, self.show_livezone)
-        {
+        if let (Some(min), Some(max), true) = (self.min_value, self.max_value, self.show_livezone) {
             circular_arc_stroke(
                 ui.painter(),
                 center,
-                self.knob_radius + dist,
+                self.knob_radius + self.markings_offset,
                 self.angle_for_value(min) as f32,
                 self.angle_for_value(max) as f32,
                 1.0,
@@ -236,8 +243,54 @@ impl Widget for Dial<'_> {
             set(&mut self.get_set_value, new);
         }
 
+        let current_angle = self.angle_for_value(value);
+
         // Positions
-        for position in self.positions {
+        for position in &self.positions {
+            let angle = self.angle_for_value(position.value);
+
+            // Snap
+            if let Some(snap_thresh) = position.snap {
+                if (angle - current_angle).abs() < snap_thresh as f64 {
+                    set(&mut self.get_set_value, position.value);
+                }
+            }
+
+            // Drawing
+            let vect = Vec2::angled(angle as _);
+
+            let r = self.markings_offset + self.knob_radius;
+            let p1 = center + vect * r;
+            let p2 = position
+                .line_length
+                .map(|len| center + vect * (r + len))
+                .unwrap_or(p1);
+
+            ui.painter().line_segment([p1, p2], stroke);
+
+            // Label
+            if let Some(label) = &position.label {
+                let align = if vect.x > 0.0 {
+                    egui::Align::RIGHT
+                } else {
+                    egui::Align::LEFT
+                };
+
+                let galley = ui.painter().layout_job(
+                    WidgetText::from(label.clone())
+                        .into_layout_job(ui.style(), egui::FontSelection::Default, align)
+                        .as_ref()
+                        .clone(),
+                );
+                ui.painter().galley(p2, galley, stroke.color);
+
+                let max_rect = Rect::from_two_pos(p2, resp.rect.max);
+                ui.scope_builder(egui::UiBuilder::new().max_rect(max_rect), |ui| {
+                    if ui.label(label.clone()).double_clicked() {
+                        set(&mut self.get_set_value, position.value);
+                    }
+                });
+            }
         }
 
         resp
@@ -279,7 +332,7 @@ impl DialPosition {
             snap: None,
             label: None,
             underline: false,
-            line_length: Some(1.0),
+            line_length: Some(20.0),
         }
     }
 

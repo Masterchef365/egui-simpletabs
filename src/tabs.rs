@@ -1,6 +1,6 @@
 use egui::{
-    NumExt, Response, Sense, Shape, Stroke, TextStyle, Ui, Vec2, Widget,
-    WidgetInfo, WidgetText, WidgetType,
+    NumExt, Response, Sense, Shape, Stroke, TextStyle, Ui, Vec2, Widget, WidgetInfo, WidgetText,
+    WidgetType,
 };
 
 pub struct TabWidget {

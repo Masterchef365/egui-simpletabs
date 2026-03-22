@@ -3,7 +3,7 @@ use egui::{
     global_theme_preference_buttons,
 };
 use egui_simpletabs::{
-    dial::{Dial, DragMode},
+    dial::{Dial, DialPosition, DragMode},
     tabs::TabWidgetExt,
     utils::circular_arc_stroke,
 };
@@ -23,6 +23,10 @@ fn main() {
 
     let mut origin_angle = -std::f64::consts::FRAC_PI_2;
 
+    let mut has_snap = false;
+    let mut snap_thresh = 1e-2;
+    let snap = has_snap.then(|| snap_thresh);
+
     let options = eframe::NativeOptions::default();
     eframe::run_simple_native("Dial test", options, move |ctx, _frame| {
         egui::CentralPanel::default().show(ctx, |ui| {
@@ -35,7 +39,10 @@ fn main() {
                         .min_value(has_min.then(|| min))
                         .max_value(has_max.then(|| max))
                         .invert(invert)
-                        .origin_angle(origin_angle),
+                        .origin_angle(origin_angle)
+                        .with_position(DialPosition::new(min).label("Min").snap(snap))
+                        .with_position(DialPosition::new(0).label("Zero").snap(snap))
+                        .with_position(DialPosition::new(max).label("Max").snap(snap))
                 );
                 ui.add(DragValue::new(&mut value).speed(1e-2));
             });
@@ -53,12 +60,12 @@ fn main() {
 
             ui.horizontal(|ui| {
                 ui.checkbox(&mut has_min, "Has min");
-                ui.add(DragValue::new(&mut min).speed(1e-2));
+                ui.add_enabled(has_min, DragValue::new(&mut min).speed(1e-2));
             });
 
             ui.horizontal(|ui| {
                 ui.checkbox(&mut has_max, "Has max");
-                ui.add(DragValue::new(&mut max).speed(1e-2));
+                ui.add_enabled(has_max, DragValue::new(&mut max).speed(1e-2));
             });
 
             ui.checkbox(&mut invert, "Invert");
@@ -67,6 +74,12 @@ fn main() {
                 ui.label("Origin angle: ");
                 ui.add(DragValue::new(&mut origin_angle).speed(1e-2));
             });
+
+            ui.horizontal(|ui| {
+                ui.checkbox(&mut has_snap, "Snap");
+                ui.add_enabled(has_snap, DragValue::new(&mut snap_thresh).speed(1e-2));
+            });
+
 
             /*
             let mut value_int = 10i32;
