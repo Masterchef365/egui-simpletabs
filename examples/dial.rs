@@ -16,7 +16,7 @@ fn main() {
     let mut has_min = true;
     let mut has_max = true;
 
-    let mut min: f32 = 0.0;
+    let mut min: f32 = -1.0;
     let mut max: f32 = 1.0;
 
     let mut invert = false;
@@ -24,6 +24,10 @@ fn main() {
     let mut underline = true;
 
     let mut origin_angle = -std::f64::consts::FRAC_PI_2;
+
+    let mut mouse_sensitivity = 5e-2;
+
+    let mut value_per_radian = 1.0;
 
     let mut has_snap = false;
     let mut snap_thresh = 1e-2;
@@ -38,6 +42,7 @@ fn main() {
                 ui.add(
                     Dial::new(&mut value)
                         .drag_mode(drag_mode)
+                        .value_per_radian(value_per_radian)
                         .min_value(has_min.then(|| min))
                         .max_value(has_max.then(|| max))
                         .invert(invert)
@@ -84,6 +89,15 @@ fn main() {
                 ui.add_enabled(has_snap, DragValue::new(&mut snap_thresh).speed(1e-2));
             });
 
+            ui.horizontal(|ui| {
+                ui.label("Mouse sensitivity");
+                ui.add(DragValue::new(&mut mouse_sensitivity).speed(1e-2));
+            });
+
+            ui.horizontal(|ui| {
+                ui.label("Value per radian");
+                ui.add(DragValue::new(&mut value_per_radian).speed(1e-2));
+            });
 
             /*
             let mut value_int = 10i32;
