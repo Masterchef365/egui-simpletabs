@@ -15,12 +15,13 @@ fn set(get_set_value: &mut GetSetValue<'_>, value: f64) {
 
 /// A marked position on the dial
 pub struct DialPosition {
-    pub label: Option<RichText>,
-    pub line_length: Option<f32>,
-    pub underline: bool,
-    /// Whether to snap to this option, and if so, how close (in radians)
+    label: Option<RichText>,
+    value: f64,
+    line_length: Option<f32>,
+    underline: bool,
+    /// Whether to snap to this position, and if so, how close (in radians)
     /// Not needed when using integer positions
-    pub snap: Option<f32>,
+    snap: Option<f32>,
 }
 
 #[derive(Copy, Clone, Debug, Default, PartialEq, Eq)]
@@ -235,6 +236,10 @@ impl Widget for Dial<'_> {
             set(&mut self.get_set_value, new);
         }
 
+        // Positions
+        for position in self.positions {
+        }
+
         resp
     }
 }
@@ -265,4 +270,36 @@ impl DragMode {
 
 fn cross2d(a: Vec2, b: Vec2) -> f32 {
     a.x * b.y - a.y * b.x
+}
+
+impl DialPosition {
+    pub fn new<Num: Numeric>(value: Num) -> Self {
+        Self {
+            value: value.to_f64(),
+            snap: None,
+            label: None,
+            underline: false,
+            line_length: Some(1.0),
+        }
+    }
+
+    pub fn snap(mut self, snap_threshold_radians: Option<f32>) -> Self {
+        self.snap = snap_threshold_radians;
+        self
+    }
+
+    pub fn label(mut self, label: impl Into<RichText>) -> Self {
+        self.label = Some(label.into());
+        self
+    }
+
+    pub fn underline(mut self, underline: bool) -> Self {
+        self.underline = underline;
+        self
+    }
+
+    pub fn line_length(mut self, length: Option<f32>) -> Self {
+        self.line_length = length;
+        self
+    }
 }
