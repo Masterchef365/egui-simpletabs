@@ -1,11 +1,9 @@
 use egui::{
-    Color32, DragValue, Painter, Pos2, Response, Shape, Stroke, Ui, Vec2, Widget,
-    epaint::CubicBezierShape, global_theme_preference_buttons,
+    Color32, DragValue, global_theme_preference_buttons,
 };
 use egui_simpletabs::{
     dial::{Dial, DialPosition, DragMode},
-    tabs::TabWidgetExt,
-    utils::{IndecisiveOption, circular_arc_stroke},
+    utils::IndecisiveOption,
 };
 
 fn main() {
@@ -58,9 +56,8 @@ fn main() {
                         DialPosition::new(1)
                             .label("One")
                             .snap(snap.into())
-                            .underline(underline)
+                            .underline(underline),
                     );
-
 
                 if let Some(min) = min.into_option() {
                     dial = dial.with_position(
