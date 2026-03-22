@@ -1,6 +1,6 @@
 use std::ops::RangeInclusive;
 
-use egui::{Pos2, Rect, Response, RichText, Ui, Vec2, Widget, WidgetText, emath::Numeric};
+use egui::{Pos2, Rect, Response, RichText, Sense, Ui, Vec2, Widget, WidgetText, emath::Numeric};
 
 use crate::utils::circular_arc_stroke;
 
@@ -270,26 +270,19 @@ impl Widget for Dial<'_> {
 
             // Label
             if let Some(label) = &position.label {
-                let align = if vect.x > 0.0 {
-                    egui::Align::RIGHT
-                } else {
-                    egui::Align::LEFT
-                };
+                let anchor = egui::Align2([-vect.x, vect.y].map(|v| if v < 0.0 { egui::Align::Min } else { egui::Align::Max }));
 
-                let galley = ui.painter().layout_job(
-                    WidgetText::from(label.clone())
-                        .into_layout_job(ui.style(), egui::FontSelection::Default, align)
-                        .as_ref()
-                        .clone(),
-                );
-                ui.painter().galley(p2, galley, stroke.color);
+                let rect = ui.painter().text(p2, anchor, label.text(), Default::default(), stroke.color);
 
-                let max_rect = Rect::from_two_pos(p2, resp.rect.max);
-                ui.scope_builder(egui::UiBuilder::new().max_rect(max_rect), |ui| {
-                    if ui.label(label.clone()).double_clicked() {
-                        set(&mut self.get_set_value, position.value);
-                    }
-                });
+                if position.underline {
+                    let p3 = p2 + Vec2::new(rect.width(), 0.0) * vect.x.signum();
+                    ui.painter().line_segment([p2, p3], stroke);
+                }
+
+                let label_resp = ui.allocate_rect(rect, Sense::click());
+                if label_resp.double_clicked() {
+                    set(&mut self.get_set_value, position.value);
+                }
             }
         }
 
