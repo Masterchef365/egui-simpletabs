@@ -1,4 +1,4 @@
-use egui::{global_theme_preference_buttons, Color32, DragValue};
+use egui::{global_theme_preference_buttons, Color32, ComboBox, DragValue};
 use egui_simpletabs::{
     dial::{Dial, DialPosition, DragMode},
     utils::IndecisiveOption,
@@ -43,7 +43,6 @@ fn main() {
                     max.show(ui, |ui, max| ui.add(DragValue::new(max).speed(1e-2)));
                 });
 
-
                 ui.horizontal(|ui| {
                     ui.label("Value per radian");
                     ui.add(DragValue::new(&mut value_per_radian).speed(1e-2));
@@ -55,7 +54,6 @@ fn main() {
                     ui.label("Origin angle: ");
                     ui.add(DragValue::new(&mut origin_angle).speed(1e-2));
                 });
-
             });
 
             ui.group(|ui| {
@@ -80,17 +78,18 @@ fn main() {
                     ui.add(DragValue::new(&mut mouse_sensitivity).speed(1e-2));
                 });
 
-                ui.group(|ui| {
-                    ui.strong("Drag mode");
-                    ui.selectable_value(&mut drag_mode, DragMode::CoordinateY, "Coordinate Y");
-                    ui.selectable_value(&mut drag_mode, DragMode::CoordinateX, "Coordinate X");
-                    ui.selectable_value(&mut drag_mode, DragMode::Radial, "Radial");
-                    ui.selectable_value(
-                        &mut drag_mode,
-                        DragMode::DistanceFromCenter,
-                        "Distance From Center",
-                    );
-                });
+                ComboBox::new("drag", "Drag mode")
+                    .selected_text(format!("{drag_mode:?}"))
+                    .show_ui(ui, |ui| {
+                        ui.selectable_value(&mut drag_mode, DragMode::CoordinateY, "Coordinate Y");
+                        ui.selectable_value(&mut drag_mode, DragMode::CoordinateX, "Coordinate X");
+                        ui.selectable_value(&mut drag_mode, DragMode::Radial, "Radial");
+                        ui.selectable_value(
+                            &mut drag_mode,
+                            DragMode::DistanceFromCenter,
+                            "Distance From Center",
+                        );
+                    })
             });
         });
 
