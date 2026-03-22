@@ -1,6 +1,6 @@
 use egui::{
-    Color32, DragValue, Painter, Pos2, Shape, Stroke, Vec2, epaint::CubicBezierShape,
-    global_theme_preference_buttons,
+    epaint::CubicBezierShape, global_theme_preference_buttons, Color32, DragValue, Painter, Pos2,
+    Response, Shape, Stroke, Ui, Vec2, Widget,
 };
 use egui_simpletabs::{
     dial::{Dial, DialPosition, DragMode},
@@ -16,8 +16,8 @@ fn main() {
     let mut has_min = true;
     let mut has_max = true;
 
-    let mut min: f32 = -1.0;
-    let mut max: f32 = 1.0;
+    let mut min: IndecisiveOption<f32> = Some(-1.0).into();
+    let mut max: IndecisiveOption<f32> = Some(1.0).into();
 
     let mut invert = false;
 
@@ -29,30 +29,51 @@ fn main() {
 
     let mut value_per_radian = 1.0;
 
-    let mut has_snap = true;
-    let mut snap_thresh = 0.05;
+    let mut snap: IndecisiveOption<f32> = Some(0.05).into();
 
     let options = eframe::NativeOptions::default();
     eframe::run_simple_native("Dial test", options, move |ctx, _frame| {
-        let snap = has_snap.then(|| snap_thresh);
+        //let snap = has_snap.then(|| snap_thresh);
 
         egui::CentralPanel::default().show(ctx, |ui| {
             global_theme_preference_buttons(ui);
 
             ui.group(|ui| {
-                ui.add(
-                    Dial::new(&mut value)
-                        .drag_mode(drag_mode)
-                        .value_per_radian(value_per_radian)
-                        .min_value(has_min.then(|| min))
-                        .max_value(has_max.then(|| max))
-                        .invert(invert)
-                        .origin_angle(origin_angle)
-                        .mouse_sensitivity(mouse_sensitivity)
-                        .with_position(DialPosition::new(min).label("Min").snap(snap).underline(underline))
-                        .with_position(DialPosition::new(0).label("Zero").snap(snap).underline(underline).color(Color32::DARK_GREEN))
-                        .with_position(DialPosition::new(max).label("Max").snap(snap).underline(underline))
-                );
+                let mut dial = Dial::new(&mut value)
+                    .drag_mode(drag_mode)
+                    .value_per_radian(value_per_radian)
+                    .min_value(min.into_option())
+                    .max_value(max.into_option())
+                    .invert(invert)
+                    .origin_angle(origin_angle)
+                    .mouse_sensitivity(mouse_sensitivity)
+                    .with_position(
+                        DialPosition::new(0)
+                            .label("Zero")
+                            .snap(snap.into())
+                            .underline(underline)
+                            .color(Color32::DARK_GREEN),
+                    );
+
+                if let Some(min) = min.into_option() {
+                    dial = dial.with_position(
+                        DialPosition::new(min)
+                            .label("Min")
+                            .snap(snap.into())
+                            .underline(underline),
+                    );
+                }
+
+                if let Some(max) = max.into_option() {
+                    dial = dial.with_position(
+                        DialPosition::new(max)
+                            .label("Max")
+                            .snap(snap.into())
+                            .underline(underline),
+                    );
+                }
+
+                ui.add(dial);
                 ui.add(DragValue::new(&mut value).speed(1e-2));
             });
 
@@ -68,13 +89,13 @@ fn main() {
             });
 
             ui.horizontal(|ui| {
-                ui.checkbox(&mut has_min, "Has min");
-                ui.add_enabled(has_min, DragValue::new(&mut min).speed(1e-2));
+                ui.label("Min");
+                min.show(ui, |ui, min| ui.add(DragValue::new(min).speed(1e-2)));
             });
 
             ui.horizontal(|ui| {
-                ui.checkbox(&mut has_max, "Has max");
-                ui.add_enabled(has_max, DragValue::new(&mut max).speed(1e-2));
+                ui.label("Max");
+                max.show(ui, |ui, max| ui.add(DragValue::new(max).speed(1e-2)));
             });
 
             ui.checkbox(&mut invert, "Invert");
@@ -87,8 +108,12 @@ fn main() {
             });
 
             ui.horizontal(|ui| {
-                ui.checkbox(&mut has_snap, "Snap");
-                ui.add_enabled(has_snap, DragValue::new(&mut snap_thresh).speed(1e-2));
+                ui.label("Snap: ");
+                snap.show(ui, |ui, snap_thresh| {
+                    ui.add(DragValue::new(snap_thresh).speed(1e-2))
+                });
+                //ui.checkbox(&mut has_snap, "Snap");
+                //ui.add_enabled(has_snap, DragValue::new(&mut snap_thresh).speed(1e-2));
             });
 
             ui.horizontal(|ui| {
@@ -112,4 +137,45 @@ fn main() {
         });
     })
     .unwrap();
+}
+
+#[derive(Clone, Copy)]
+pub struct IndecisiveOption<T> {
+    pub is_some: bool,
+    pub value: T,
+}
+
+impl<T: Default> From<Option<T>> for IndecisiveOption<T> {
+    fn from(value: Option<T>) -> Self {
+        Self {
+            is_some: value.is_some(),
+            value: value.unwrap_or_default(),
+        }
+    }
+}
+
+impl<T> Into<Option<T>> for IndecisiveOption<T> {
+    fn into(self) -> Option<T> {
+        self.into_option()
+    }
+}
+
+impl<T> IndecisiveOption<T> {
+    fn into_option(self) -> Option<T> {
+        self.is_some.then(|| self.value)
+    }
+}
+
+
+impl<T: Default> IndecisiveOption<T> {
+    pub fn show<F>(&mut self, ui: &mut Ui, show_value: F) -> Response
+    where
+        F: FnOnce(&mut Ui, &mut T) -> Response,
+    {
+        ui.horizontal(move |ui| {
+            ui.checkbox(&mut self.is_some, "");
+            ui.add_enabled(self.is_some, |ui: &mut Ui| show_value(ui, &mut self.value));
+        })
+        .response
+    }
 }
