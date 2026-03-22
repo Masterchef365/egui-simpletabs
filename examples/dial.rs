@@ -1,7 +1,7 @@
 use egui::{Color32, DragValue, Painter, Pos2, Shape, Stroke, Vec2, epaint::CubicBezierShape, global_theme_preference_buttons};
 use egui_simpletabs::{
     dial::{Dial, DragMode},
-    tabs::TabWidgetExt, utils::circular_arc,
+    tabs::TabWidgetExt, utils::circular_arc_stroke,
 };
 
 fn main() {
@@ -75,7 +75,7 @@ fn main() {
 
             let pos = ui.next_widget_position() + Vec2::splat(50.0);
             ui.painter().circle_stroke(pos, 20.0, Stroke::new(2.0, Color32::RED));
-            circular_arc(ui.painter(), pos, 20.0, min, max, 1.0, Stroke::new(2.0, Color32::WHITE));
+            circular_arc_stroke(ui.painter(), pos, 20.0, min, max, 1.0, Stroke::new(2.0, Color32::WHITE));
         });
     })
     .unwrap();

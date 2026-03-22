@@ -5,15 +5,21 @@ use egui::{
     Shape, Stroke, Vec2,
 };
 
-pub fn circular_arc(
+pub fn circular_arc_stroke(
     painter: &Painter,
     center: Pos2,
     radius: f32,
-    begin_angle: f32,
-    end_angle: f32,
+    mut begin_angle: f32,
+    mut end_angle: f32,
     resolution: f32,
     stroke: Stroke,
 ) {
+    if begin_angle > end_angle {
+        std::mem::swap(&mut begin_angle, &mut end_angle);
+    }
+
+    let end_angle = begin_angle + (end_angle - begin_angle).clamp(0.0, std::f32::consts::TAU);
+
     let n_segments = (end_angle - begin_angle).mul(resolution).abs().ceil().clamp(0.0, 100.0) as usize;
     for points in circular_arc_beziers(center, radius, begin_angle, end_angle, n_segments) {
         let shape =
