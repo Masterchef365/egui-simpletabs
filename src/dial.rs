@@ -216,7 +216,7 @@ impl Widget for Dial<'_> {
             Vec2::splat((self.knob_radius + self.markings_offset) * 2.0),
         );
 
-        let knob_resp = ui.allocate_rect(knob_rect, egui::Sense::click_and_drag());
+        let mut knob_resp = ui.allocate_rect(knob_rect, egui::Sense::click_and_drag());
 
         let stroke = ui.style().visuals.widgets.active.fg_stroke;
 
@@ -241,6 +241,7 @@ impl Widget for Dial<'_> {
                 .drag_mode
                 .calculate_delta(mouse_pos - center, knob_resp.drag_delta());
             value += delta as f64 * self.mouse_sensitivity * self.value_per_angle;
+            knob_resp.mark_changed();
 
             if let Some(max) = self.max_value {
                 value = value.min(max);
