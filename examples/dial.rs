@@ -5,7 +5,7 @@ use egui::{
 use egui_simpletabs::{
     dial::{Dial, DialPosition, DragMode},
     tabs::TabWidgetExt,
-    utils::circular_arc_stroke,
+    utils::{IndecisiveOption, circular_arc_stroke},
 };
 
 fn main() {
@@ -145,44 +145,4 @@ fn main() {
         });
     })
     .unwrap();
-}
-
-#[derive(Clone, Copy)]
-pub struct IndecisiveOption<T> {
-    pub is_some: bool,
-    pub value: T,
-}
-
-impl<T: Default> From<Option<T>> for IndecisiveOption<T> {
-    fn from(value: Option<T>) -> Self {
-        Self {
-            is_some: value.is_some(),
-            value: value.unwrap_or_default(),
-        }
-    }
-}
-
-impl<T> Into<Option<T>> for IndecisiveOption<T> {
-    fn into(self) -> Option<T> {
-        self.into_option()
-    }
-}
-
-impl<T> IndecisiveOption<T> {
-    fn into_option(self) -> Option<T> {
-        self.is_some.then(|| self.value)
-    }
-}
-
-impl<T: Default> IndecisiveOption<T> {
-    pub fn show<F>(&mut self, ui: &mut Ui, show_value: F) -> Response
-    where
-        F: FnOnce(&mut Ui, &mut T) -> Response,
-    {
-        ui.horizontal(move |ui| {
-            ui.checkbox(&mut self.is_some, "");
-            ui.add_enabled(self.is_some, |ui: &mut Ui| show_value(ui, &mut self.value));
-        })
-        .response
-    }
 }
