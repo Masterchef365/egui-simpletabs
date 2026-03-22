@@ -139,6 +139,8 @@ fn main() {
 
             ui.add(dial);
             ui.add(DragValue::new(&mut value).speed(1e-2));
+
+            ui.label("Double click labels to jump to them");
         });
     })
     .unwrap();
