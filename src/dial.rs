@@ -34,10 +34,14 @@ pub enum DragMode {
     Radial,
 }
 
+#[derive(Copy, Clone, Debug, Default, PartialEq, Eq)]
 pub enum TurningMode {
-    /// Knob can move in
+    /// Knob can move in to any position
+    #[default]
     Analog,
+    /// Knob can only reside at defined 'positions'
     Positional,
+    /// Knob can only reside at integers
     Integral,
 }
 
@@ -70,7 +74,9 @@ pub struct Dial<'a> {
     /// How is the knob free to move?
     pub turning_mode: TurningMode,
     /// Marked dial positions
-    pub positions: Vec<DialPosition>,
+    positions: Vec<DialPosition>,
+    /// How many discrete moves the dial may make per second
+    pub throttle_turn_rate: f64,
 }
 
 impl<'a> Dial<'a> {
@@ -107,6 +113,7 @@ impl<'a> Dial<'a> {
                 true => TurningMode::Integral,
                 false => TurningMode::Analog,
             },
+            throttle_turn_rate: 5.0,
         }
     }
 
@@ -187,6 +194,18 @@ impl<'a> Dial<'a> {
         self
     }
 
+    /// How many discrete moves the dial may make per second
+    pub fn throttle_turn_rate(mut self, rate: f64) -> Self {
+        self.throttle_turn_rate = rate;
+        self
+    }
+
+    /// How is the knob free to move?
+    pub fn turning_mode(mut self, mode: TurningMode) -> Self {
+        self.turning_mode = mode;
+        self
+    }
+
     /// Shorthand for distributing the range of values between min and max, optionally avoiding
     /// 'deadzone' radians (leaving that as unreachable space between the max and min values)
     pub fn range<Num: Numeric>(self, range: RangeInclusive<Num>, deadzone: Option<f64>) -> Self {
@@ -201,6 +220,10 @@ impl<'a> Dial<'a> {
     /// Add a marked position to the dial
     pub fn with_position(mut self, position: DialPosition) -> Self {
         self.positions.push(position);
+
+        // We sort here, so that we can easily traverse for indices
+        self.positions.sort_by(|a, b| a.value.partial_cmp(&b.value).unwrap_or(std::cmp::Ordering::Equal));
+
         self
     }
 
@@ -260,19 +283,48 @@ impl Widget for Dial<'_> {
 
             match self.turning_mode {
                 TurningMode::Analog => {
-                    value += delta * self.mouse_sensitivity * self.value_per_radian
+                    value += delta * self.mouse_sensitivity * self.value_per_radian;
+                    knob_resp.mark_changed();
                 }
                 TurningMode::Integral => {
                     if delta.abs() * self.mouse_sensitivity > 1.0 {
-                        if throttle(ui.ctx(), "knob", 5.) {
+                        if throttle(ui.ctx(), "knob", self.throttle_turn_rate) {
                             value += delta.signum();
+                            knob_resp.mark_changed();
                         }
                     }
                 }
-                TurningMode::Positional => todo!(),
-            }
+                TurningMode::Positional => {
+                    if delta.abs() * self.mouse_sensitivity > 1.0 {
+                        if throttle(ui.ctx(), "knob", self.throttle_turn_rate) {
+                            let mut closest_idx = None;
+                            let mut closest_diff = f64::INFINITY;
+                            for (idx, position) in self.positions.iter().enumerate() {
+                                let diff = (position.value - value).abs();
+                                if diff < closest_diff {
+                                    closest_idx = Some(idx);
+                                    closest_diff = diff;
+                                }
+                            }
+                            let closest_idx = closest_idx.unwrap_or(0);
 
-            knob_resp.mark_changed();
+                            let next_idx = if delta > 0.0 {
+                                let next = closest_idx + 1;
+                                (next < self.positions.len()).then(|| next)
+                            } else {
+                                closest_idx.checked_sub(1)
+                            };
+
+                            if let Some(next) = next_idx {
+                                value = self.positions[next].value;
+                                knob_resp.mark_changed();
+                            }
+                        }
+                    }
+
+
+                },
+            }
 
             if let Some(max) = self.max_value {
                 value = value.min(max);
