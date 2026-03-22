@@ -1,6 +1,9 @@
-use std::{ops::Mul, time::Instant};
+use std::ops::Mul;
 
-use egui::{Color32, Context, Id, Painter, Pos2, Response, Shape, Stroke, Ui, Vec2, epaint::CubicBezierShape};
+use egui::{
+    Color32, Context, Id, Painter, Pos2, Response, Shape, Stroke, Ui, Vec2,
+    epaint::CubicBezierShape,
+};
 
 pub fn circular_arc_stroke(
     painter: &Painter,
@@ -128,7 +131,7 @@ impl<T: Default> IndecisiveOption<T> {
 }
 
 /// When called repeatedly, will only return true once every 1/`max_per_second` seconds.
-/// Key must be unique only among concurrent throttles. 
+/// Key must be unique only among concurrent throttles.
 pub fn throttle(ctx: &Context, key: impl Into<Id>, max_per_second: f64) -> bool {
     let now = ctx.input(|inp| inp.time);
     ctx.memory_mut(|mem| {

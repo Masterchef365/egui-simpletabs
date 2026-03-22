@@ -1,4 +1,4 @@
-use egui::{global_theme_preference_buttons, Color32, ComboBox, DragValue};
+use egui::{Color32, ComboBox, DragValue, global_theme_preference_buttons};
 use egui_simpletabs::{
     dial::{Dial, DialPosition, DragMode},
     utils::IndecisiveOption,

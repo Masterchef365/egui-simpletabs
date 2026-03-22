@@ -35,7 +35,7 @@ pub enum DragMode {
 }
 
 pub enum TurningMode {
-    /// Knob can move in 
+    /// Knob can move in
     Analog,
     Positional,
     Integral,
@@ -88,7 +88,10 @@ impl<'a> Dial<'a> {
         let knob_radius: f32 = 25.0;
         Self {
             get_set_value: Box::new(get_set_value),
-            mouse_sensitivity: match Num::INTEGRAL { true => 1.0, false => 5e-2 },
+            mouse_sensitivity: match Num::INTEGRAL {
+                true => 1.0,
+                false => 5e-2,
+            },
             origin_angle: -std::f64::consts::FRAC_PI_2,
             //origin_value: 0.0,
             value_per_radian: 1.0,
@@ -100,7 +103,10 @@ impl<'a> Dial<'a> {
             show_livezone: true,
             positions: Vec::new(),
             markings_offset: 5.0,
-            turning_mode: match Num::INTEGRAL { true => TurningMode::Integral, false => TurningMode::Analog },
+            turning_mode: match Num::INTEGRAL {
+                true => TurningMode::Integral,
+                false => TurningMode::Analog,
+            },
         }
     }
 
@@ -249,15 +255,20 @@ impl Widget for Dial<'_> {
         {
             let delta = self
                 .drag_mode
-                .calculate_delta(mouse_pos - center, knob_resp.drag_delta()) as f64;
+                .calculate_delta(mouse_pos - center, knob_resp.drag_delta())
+                as f64;
 
             match self.turning_mode {
-                TurningMode::Analog => value += delta * self.mouse_sensitivity * self.value_per_radian,
-                TurningMode::Integral => if delta.abs() * self.mouse_sensitivity > 1.0 { 
-                    if throttle(ui.ctx(), "knob", 5.) {
-                        value += delta.signum();
+                TurningMode::Analog => {
+                    value += delta * self.mouse_sensitivity * self.value_per_radian
+                }
+                TurningMode::Integral => {
+                    if delta.abs() * self.mouse_sensitivity > 1.0 {
+                        if throttle(ui.ctx(), "knob", 5.) {
+                            value += delta.signum();
+                        }
                     }
-                },
+                }
                 TurningMode::Positional => todo!(),
             }
 
