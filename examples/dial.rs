@@ -1,11 +1,12 @@
-use egui::{global_theme_preference_buttons, DragValue};
+use egui::{Color32, DragValue, Painter, Pos2, Shape, Stroke, Vec2, epaint::CubicBezierShape, global_theme_preference_buttons};
 use egui_simpletabs::{
     dial::{Dial, DragMode},
-    tabs::TabWidgetExt,
+    tabs::TabWidgetExt, utils::circular_arc,
 };
 
 fn main() {
     let mut value = 10f64;
+
     let mut drag_mode = DragMode::default();
 
     let mut has_min = false;
@@ -62,6 +63,17 @@ fn main() {
                 ui.label("Origin angle: ");
                 ui.add(DragValue::new(&mut origin_angle).speed(1e-2));
             });
+
+            /*
+            let mut value_int = 10i32;
+            let mut deadzone = 0.1;
+            let mut has_deadzone = 0.1;
+            ui.group(|ui| {
+                ui.add(Dial::new(&mut value_int).range(min..=max, None))
+            });
+            */
+
+            circular_arc(ui.painter(), ui.next_widget_position(), 30.0, 0.0, 1.0, 1, Stroke::new(1.0, Color32::WHITE));
         });
     })
     .unwrap();
