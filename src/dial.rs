@@ -58,7 +58,7 @@ impl<'a> Dial<'a> {
         Self {
             get_set_value: Box::new(get_set_value),
             mouse_sensitivity: 5e-2,
-            origin_angle: std::f64::consts::FRAC_PI_2,
+            origin_angle: -std::f64::consts::FRAC_PI_2,
             origin_value: 0.0,
             value_per_angle: 1.0,
             min_value: None,
@@ -84,7 +84,7 @@ impl<'a> Dial<'a> {
     }
 
     /// Sets the angle (in radians) at the origin
-    pub fn origin_angle<Num: Numeric>(mut self, angle: f64) -> Self {
+    pub fn origin_angle(mut self, angle: f64) -> Self {
         self.origin_angle = angle;
         self
     }
@@ -125,6 +125,13 @@ impl<'a> Dial<'a> {
         self
     }
 
+    /// Whether to invert the direction of rotation (Defaults to clockwise = increase)
+    pub fn invert(mut self, invert: bool) -> Self {
+        if invert {
+            self.value_per_angle *= -1.0;
+        }
+        self
+    }
 
     /// Shorthand for distributing the range of values between min and max, optionally avoiding
     /// 'deadzone' radians (leaving that as unreachable space between the max and min values)
