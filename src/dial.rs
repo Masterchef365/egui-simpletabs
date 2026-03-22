@@ -300,6 +300,8 @@ impl Widget for Dial<'_> {
             }
         }
 
+        ui.advance_cursor_after_rect(background_area);
+
         knob_resp
     }
 }
