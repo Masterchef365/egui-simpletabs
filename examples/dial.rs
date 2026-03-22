@@ -1,6 +1,6 @@
 use egui::{
-    epaint::CubicBezierShape, global_theme_preference_buttons, Color32, DragValue, Painter, Pos2,
-    Response, Shape, Stroke, Ui, Vec2, Widget,
+    Color32, DragValue, Painter, Pos2, Response, Shape, Stroke, Ui, Vec2, Widget,
+    epaint::CubicBezierShape, global_theme_preference_buttons,
 };
 use egui_simpletabs::{
     dial::{Dial, DialPosition, DragMode},
@@ -165,7 +165,6 @@ impl<T> IndecisiveOption<T> {
         self.is_some.then(|| self.value)
     }
 }
-
 
 impl<T: Default> IndecisiveOption<T> {
     pub fn show<F>(&mut self, ui: &mut Ui, show_value: F) -> Response

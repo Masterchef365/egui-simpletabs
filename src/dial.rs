@@ -1,6 +1,6 @@
 use std::ops::RangeInclusive;
 
-use egui::{Color32, Pos2, Rect, Response, RichText, Sense, Ui, Vec2, Widget, WidgetText, emath::Numeric};
+use egui::{Color32, Pos2, Rect, Response, Sense, Ui, Vec2, Widget, emath::Numeric};
 
 use crate::utils::circular_arc_stroke;
 
@@ -211,7 +211,10 @@ impl Widget for Dial<'_> {
         let angle = self.angle_for_value(value);
         draw_knob(ui, center, angle, self.knob_radius);
 
-        let knob_rect = Rect::from_center_size(center, Vec2::splat((self.knob_radius + self.markings_offset) * 2.0));
+        let knob_rect = Rect::from_center_size(
+            center,
+            Vec2::splat((self.knob_radius + self.markings_offset) * 2.0),
+        );
 
         let knob_resp = ui.allocate_rect(knob_rect, egui::Sense::click_and_drag());
 
@@ -262,7 +265,9 @@ impl Widget for Dial<'_> {
             let pos_angle = self.angle_for_value(position.value);
 
             // Snap
-            if let Some(snap_thresh) = position.snap && knob_resp.dragged() {
+            if let Some(snap_thresh) = position.snap
+                && knob_resp.dragged()
+            {
                 if (pos_angle - angle).abs() < snap_thresh as f64 {
                     value = position.value;
                     set(&mut self.get_set_value, value);
@@ -283,9 +288,17 @@ impl Widget for Dial<'_> {
 
             // Label
             if let Some(label) = &position.label {
-                let anchor = egui::Align2([-vect.x, vect.y].map(|v| if v < 0.0 { egui::Align::Min } else { egui::Align::Max }));
+                let anchor = egui::Align2([-vect.x, vect.y].map(|v| {
+                    if v < 0.0 {
+                        egui::Align::Min
+                    } else {
+                        egui::Align::Max
+                    }
+                }));
 
-                let rect = ui.painter().text(p2, anchor, label, Default::default(), position_stroke.color);
+                let rect =
+                    ui.painter()
+                        .text(p2, anchor, label, Default::default(), position_stroke.color);
 
                 if position.underline {
                     let p3 = p2 + Vec2::new(rect.width(), 0.0) * vect.x.signum();
@@ -370,6 +383,4 @@ impl DialPosition {
         self.color = Some(color);
         self
     }
-
-
 }
