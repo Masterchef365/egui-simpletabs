@@ -13,8 +13,8 @@ fn main() {
 
     let mut drag_mode = DragMode::default();
 
-    let mut has_min = false;
-    let mut has_max = false;
+    let mut has_min = true;
+    let mut has_max = true;
 
     let mut min: f32 = 0.0;
     let mut max: f32 = 1.0;
@@ -76,19 +76,6 @@ fn main() {
                 ui.add(Dial::new(&mut value_int).range(min..=max, None))
             });
             */
-
-            let pos = ui.next_widget_position() + Vec2::splat(50.0);
-            ui.painter()
-                .circle_stroke(pos, 20.0, Stroke::new(2.0, Color32::RED));
-            circular_arc_stroke(
-                ui.painter(),
-                pos,
-                20.0,
-                min,
-                max,
-                1.0,
-                Stroke::new(2.0, Color32::WHITE),
-            );
         });
     })
     .unwrap();

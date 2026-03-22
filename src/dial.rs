@@ -1,6 +1,6 @@
 use std::ops::RangeInclusive;
 
-use egui::{Pos2, Response, Ui, Vec2, Widget, emath::Numeric};
+use egui::{Pos2, Response, RichText, Ui, Vec2, Widget, emath::Numeric};
 
 use crate::utils::circular_arc_stroke;
 
@@ -13,6 +13,16 @@ fn set(get_set_value: &mut GetSetValue<'_>, value: f64) {
     (get_set_value)(Some(value));
 }
 
+/// A marked position on the dial
+pub struct DialPosition {
+    pub label: Option<RichText>,
+    pub line_length: Option<f32>,
+    pub underline: bool,
+    /// Whether to snap to this option, and if so, how close (in radians)
+    /// Not needed when using integer positions
+    pub snap: Option<f32>,
+}
+
 #[derive(Copy, Clone, Debug, Default, PartialEq, Eq)]
 pub enum DragMode {
     DistanceFromCenter,
@@ -22,6 +32,7 @@ pub enum DragMode {
     Radial,
 }
 
+/// A Dial widget
 pub struct Dial<'a> {
     get_set_value: GetSetValue<'a>,
     /// Change in angle (in radians) per change in mouse position
@@ -45,6 +56,8 @@ pub struct Dial<'a> {
     /// Display a circular arc around the active area of the dial,
     /// at the specific distance from the knob (if any)
     pub show_livezone: Option<f32>,
+    /// Marked dial positions
+    pub positions: Vec<DialPosition>,
 }
 
 impl<'a> Dial<'a> {
@@ -72,6 +85,7 @@ impl<'a> Dial<'a> {
             knob_radius,
             drag_mode: DragMode::default(),
             show_livezone: Some(5.0),
+            positions: Vec::new(),
         }
     }
 
@@ -155,6 +169,12 @@ impl<'a> Dial<'a> {
             .max_value(Some(*range.end()))
             .origin_value(*range.start())
             .value_per_radian(value_range / usable_radians)
+    }
+
+    /// Add a marked position to the dial
+    pub fn with_position(mut self, position: DialPosition) -> Self {
+        self.positions.push(position);
+        self
     }
 
     /// Returns the angle for a given value
