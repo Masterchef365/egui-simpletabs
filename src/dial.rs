@@ -1,6 +1,6 @@
 use std::ops::RangeInclusive;
 
-use egui::{Pos2, Rect, Response, RichText, Sense, Ui, Vec2, Widget, WidgetText, emath::Numeric};
+use egui::{Color32, Pos2, Rect, Response, RichText, Sense, Ui, Vec2, Widget, WidgetText, emath::Numeric};
 
 use crate::utils::circular_arc_stroke;
 
@@ -15,7 +15,8 @@ fn set(get_set_value: &mut GetSetValue<'_>, value: f64) {
 
 /// A marked position on the dial
 pub struct DialPosition {
-    label: Option<RichText>,
+    label: Option<String>,
+    color: Option<Color32>,
     value: f64,
     line_length: Option<f32>,
     underline: bool,
@@ -248,6 +249,11 @@ impl Widget for Dial<'_> {
 
         // Positions
         for position in &self.positions {
+            let mut position_stroke = stroke.clone();
+            if let Some(color) = position.color {
+                position_stroke.color = color;
+            }
+
             let angle = self.angle_for_value(position.value);
 
             // Snap
@@ -267,17 +273,17 @@ impl Widget for Dial<'_> {
                 .map(|len| center + vect * (r + len))
                 .unwrap_or(p1);
 
-            ui.painter().line_segment([p1, p2], stroke);
+            ui.painter().line_segment([p1, p2], position_stroke);
 
             // Label
             if let Some(label) = &position.label {
                 let anchor = egui::Align2([-vect.x, vect.y].map(|v| if v < 0.0 { egui::Align::Min } else { egui::Align::Max }));
 
-                let rect = ui.painter().text(p2, anchor, label.text(), Default::default(), stroke.color);
+                let rect = ui.painter().text(p2, anchor, label, Default::default(), position_stroke.color);
 
                 if position.underline {
                     let p3 = p2 + Vec2::new(rect.width(), 0.0) * vect.x.signum();
-                    ui.painter().line_segment([p2, p3], stroke);
+                    ui.painter().line_segment([p2, p3], position_stroke);
                 }
 
                 let label_resp = ui.allocate_rect(rect, Sense::click());
@@ -327,6 +333,7 @@ impl DialPosition {
             label: None,
             underline: false,
             line_length: Some(20.0),
+            color: None,
         }
     }
 
@@ -335,7 +342,7 @@ impl DialPosition {
         self
     }
 
-    pub fn label(mut self, label: impl Into<RichText>) -> Self {
+    pub fn label(mut self, label: impl Into<String>) -> Self {
         self.label = Some(label.into());
         self
     }
@@ -349,4 +356,11 @@ impl DialPosition {
         self.line_length = length;
         self
     }
+
+    pub fn color(mut self, color: Color32) -> Self {
+        self.color = Some(color);
+        self
+    }
+
+
 }

@@ -31,6 +31,7 @@ fn main() {
 
     let mut has_snap = false;
     let mut snap_thresh = 1e-2;
+
     let snap = has_snap.then(|| snap_thresh);
 
     let options = eframe::NativeOptions::default();
@@ -48,7 +49,7 @@ fn main() {
                         .invert(invert)
                         .origin_angle(origin_angle)
                         .with_position(DialPosition::new(min).label("Min").snap(snap).underline(underline))
-                        .with_position(DialPosition::new(0).label("Zero").snap(snap).underline(underline))
+                        .with_position(DialPosition::new(0).label("Zero").snap(snap).underline(underline).color(Color32::DARK_GREEN))
                         .with_position(DialPosition::new(max).label("Max").snap(snap).underline(underline))
                 );
                 ui.add(DragValue::new(&mut value).speed(1e-2));
