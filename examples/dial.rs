@@ -75,7 +75,7 @@ fn main() {
 
             let pos = ui.next_widget_position() + Vec2::splat(50.0);
             ui.painter().circle_stroke(pos, 20.0, Stroke::new(2.0, Color32::RED));
-            circular_arc(ui.painter(), pos, 20.0, 0.0, std::f32::consts::TAU, 20, Stroke::new(2.0, Color32::WHITE));
+            circular_arc(ui.painter(), pos, 20.0, min, max, 2, Stroke::new(2.0, Color32::WHITE));
         });
     })
     .unwrap();

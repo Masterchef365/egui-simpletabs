@@ -34,6 +34,7 @@ pub fn circular_arc_beziers(
             radius,
             begin_angle + angle_step * i as f32,
             begin_angle + angle_step * (i + 1) as f32,
+            angle_step,
         )
     })
 }
@@ -43,6 +44,7 @@ pub fn circular_arc_bezier(
     radius: f32,
     begin_angle: f32,
     end_angle: f32,
+    angle_step: f32,
 ) -> [Pos2; 4] {
     let begin_vect = Vec2::angled(begin_angle) * radius;
     let end_vect = Vec2::angled(end_angle) * radius;
@@ -51,6 +53,7 @@ pub fn circular_arc_bezier(
         begin_vect.rot90(),
         center + end_vect,
         end_vect.rot90(),
+        angle_step,
     )
 }
 
@@ -59,11 +62,15 @@ pub fn arc_from_derivatives(
     begin_deriv: Vec2,
     end_pos: Pos2,
     end_deriv: Vec2,
+    angle_step: f32,
 ) -> [Pos2; 4] {
+    // https://en.wikipedia.org/wiki/B%C3%A9zier_curve#Properties
+    let factor = 4.0 * (angle_step / 4.0).tan() / 3.0;
+
     [
         begin_pos,
-        begin_pos - begin_deriv / 3.0,
-        end_pos + end_deriv / 3.0,
+        begin_pos - begin_deriv * factor,
+        end_pos + end_deriv * factor,
         end_pos,
     ]
 }
