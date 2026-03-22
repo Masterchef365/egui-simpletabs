@@ -52,8 +52,8 @@ pub struct Dial<'a> {
     pub mouse_sensitivity: f64,
     /// Angle (in radians) at which the dial is at the "origin".
     pub origin_angle: f64,
-    // /// Value at the origin
-    // pub origin_value: f64,
+    /// Value at the origin
+    pub origin_value: f64,
     /// Change in value per change in angle (radians)
     pub value_per_radian: f64,
     /// The maximum value allowed (if any)
@@ -99,7 +99,7 @@ impl<'a> Dial<'a> {
                 false => 5e-2,
             },
             origin_angle: -std::f64::consts::FRAC_PI_2,
-            //origin_value: 0.0,
+            origin_value: 0.0,
             value_per_radian: 1.0,
             min_value: None,
             max_value: None,
@@ -127,7 +127,7 @@ impl<'a> Dial<'a> {
 
     /// Sets the value at the origin
     pub fn origin_value<Num: Numeric>(mut self, value: Num) -> Self {
-        self.origin_angle = self.angle_for_value(value.to_f64());
+        self.origin_value = value.to_f64();
         self
     }
 
@@ -229,13 +229,12 @@ impl<'a> Dial<'a> {
 
     /// Returns the angle for a given value
     fn value_for_angle(&self, angle: f64) -> f64 {
-        (angle - self.origin_angle) * self.value_per_radian // + self.origin_value
+        (angle - self.origin_angle) * self.value_per_radian + self.origin_value
     }
 
     /// Returns the angle for a given value
     fn angle_for_value(&self, value: f64) -> f64 {
-        //(value - self.origin_value) / self.value_per_angle + self.origin_angle
-        value / self.value_per_radian + self.origin_angle
+        (value - self.origin_value) / self.value_per_radian + self.origin_angle
     }
 }
 

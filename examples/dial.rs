@@ -17,6 +17,7 @@ fn main() {
     let mut underline = true;
 
     let mut origin_angle = -std::f64::consts::FRAC_PI_2;
+    let mut origin_value = 0.0;
 
     let mut mouse_sensitivity = 5e-2;
 
@@ -57,6 +58,11 @@ fn main() {
                 ui.horizontal(|ui| {
                     ui.label("Origin angle: ");
                     ui.add(DragValue::new(&mut origin_angle).speed(1e-2));
+                });
+
+                ui.horizontal(|ui| {
+                    ui.label("Origin value: ");
+                    ui.add(DragValue::new(&mut origin_value).speed(1e-2));
                 });
             });
 
@@ -108,6 +114,7 @@ fn main() {
                     .max_value(max.into_option())
                     .invert(invert)
                     .origin_angle(origin_angle)
+                    .origin_value(origin_value)
                     .mouse_sensitivity(mouse_sensitivity)
                     .show_livezone(show_livezone)
                     .with_position(
@@ -155,6 +162,7 @@ fn main() {
                     .max_value(max.into_option().map(|v| v.ceil()))
                     .invert(invert)
                     .origin_angle(origin_angle)
+                    .origin_value(origin_value)
                     .mouse_sensitivity(mouse_sensitivity * 20.0)
                     .show_livezone(show_livezone)
                     .with_position(
@@ -203,6 +211,7 @@ fn main() {
                     .max_value(max.into_option().map(|v| v.ceil()))
                     .invert(invert)
                     .origin_angle(origin_angle)
+                    .origin_value(origin_value)
                     .mouse_sensitivity(mouse_sensitivity * 20.0)
                     .show_livezone(show_livezone)
                     .turning_mode(egui_simpletabs::dial::TurningMode::Positional)
