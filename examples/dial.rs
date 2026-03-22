@@ -31,55 +31,66 @@ fn main() {
         egui::SidePanel::left("cfg").show(ctx, |ui| {
             global_theme_preference_buttons(ui);
 
-            ui.horizontal(|ui| {
-                ui.label("Min value");
-                min.show(ui, |ui, min| ui.add(DragValue::new(min).speed(1e-2)));
-            });
-
-            ui.horizontal(|ui| {
-                ui.label("Max value");
-                max.show(ui, |ui, max| ui.add(DragValue::new(max).speed(1e-2)));
-            });
-
-            ui.checkbox(&mut invert, "Invert");
-
-            ui.checkbox(&mut underline, "Underline");
-            ui.checkbox(&mut show_livezone, "Show live zone");
-
-            ui.horizontal(|ui| {
-                ui.label("Origin angle: ");
-                ui.add(DragValue::new(&mut origin_angle).speed(1e-2));
-            });
-
-            ui.horizontal(|ui| {
-                ui.label("Snap: ");
-                snap.show(ui, |ui, snap_thresh| {
-                    ui.add(DragValue::new(snap_thresh).speed(1e-2))
+            ui.group(|ui| {
+                ui.strong("Scale and range");
+                ui.horizontal(|ui| {
+                    ui.label("Min value");
+                    min.show(ui, |ui, min| ui.add(DragValue::new(min).speed(1e-2)));
                 });
-                //ui.checkbox(&mut has_snap, "Snap");
-                //ui.add_enabled(has_snap, DragValue::new(&mut snap_thresh).speed(1e-2));
-            });
 
-            ui.horizontal(|ui| {
-                ui.label("Mouse sensitivity");
-                ui.add(DragValue::new(&mut mouse_sensitivity).speed(1e-2));
-            });
+                ui.horizontal(|ui| {
+                    ui.label("Max value");
+                    max.show(ui, |ui, max| ui.add(DragValue::new(max).speed(1e-2)));
+                });
 
-            ui.horizontal(|ui| {
-                ui.label("Value per radian");
-                ui.add(DragValue::new(&mut value_per_radian).speed(1e-2));
+
+                ui.horizontal(|ui| {
+                    ui.label("Value per radian");
+                    ui.add(DragValue::new(&mut value_per_radian).speed(1e-2));
+                });
+
+                ui.checkbox(&mut invert, "Invert");
+
+                ui.horizontal(|ui| {
+                    ui.label("Origin angle: ");
+                    ui.add(DragValue::new(&mut origin_angle).speed(1e-2));
+                });
+
             });
 
             ui.group(|ui| {
-                ui.strong("Drag mode");
-                ui.selectable_value(&mut drag_mode, DragMode::CoordinateY, "Coordinate Y");
-                ui.selectable_value(&mut drag_mode, DragMode::CoordinateX, "Coordinate X");
-                ui.selectable_value(&mut drag_mode, DragMode::Radial, "Radial");
-                ui.selectable_value(
-                    &mut drag_mode,
-                    DragMode::DistanceFromCenter,
-                    "Distance From Center",
-                );
+                ui.strong("Drawing");
+                ui.checkbox(&mut underline, "Underline");
+                ui.checkbox(&mut show_livezone, "Show live zone");
+            });
+
+            ui.group(|ui| {
+                ui.strong("Interactivity");
+                ui.horizontal(|ui| {
+                    ui.label("Snap: ");
+                    snap.show(ui, |ui, snap_thresh| {
+                        ui.add(DragValue::new(snap_thresh).speed(1e-2))
+                    });
+                    //ui.checkbox(&mut has_snap, "Snap");
+                    //ui.add_enabled(has_snap, DragValue::new(&mut snap_thresh).speed(1e-2));
+                });
+
+                ui.horizontal(|ui| {
+                    ui.label("Mouse sensitivity");
+                    ui.add(DragValue::new(&mut mouse_sensitivity).speed(1e-2));
+                });
+
+                ui.group(|ui| {
+                    ui.strong("Drag mode");
+                    ui.selectable_value(&mut drag_mode, DragMode::CoordinateY, "Coordinate Y");
+                    ui.selectable_value(&mut drag_mode, DragMode::CoordinateX, "Coordinate X");
+                    ui.selectable_value(&mut drag_mode, DragMode::Radial, "Radial");
+                    ui.selectable_value(
+                        &mut drag_mode,
+                        DragMode::DistanceFromCenter,
+                        "Distance From Center",
+                    );
+                });
             });
         });
 
