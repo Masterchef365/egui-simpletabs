@@ -1,6 +1,6 @@
 use std::ops::RangeInclusive;
 
-use egui::{Painter, Pos2, Response, Ui, Vec2, Widget, emath::Numeric};
+use egui::{Pos2, Response, Ui, Vec2, Widget, emath::Numeric};
 
 use crate::utils::circular_arc_stroke;
 

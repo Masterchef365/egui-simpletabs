@@ -1,5 +1,5 @@
 use egui::{
-    Color32, NumExt, Response, RichText, Sense, Shape, Stroke, TextStyle, Ui, Vec2, Widget,
+    NumExt, Response, Sense, Shape, Stroke, TextStyle, Ui, Vec2, Widget,
     WidgetInfo, WidgetText, WidgetType,
 };
 

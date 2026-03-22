@@ -1,6 +1,5 @@
 use egui::{
-    Color32, NumExt, Response, RichText, Sense, Shape, Stroke, TextStyle, Ui, Vec2, Widget,
-    WidgetInfo, WidgetText, WidgetType,
+    Color32, RichText, Ui,
 };
 
 pub fn play_pause_button(ui: &mut Ui, paused: &mut bool) {

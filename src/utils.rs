@@ -1,8 +1,7 @@
 use std::ops::Mul;
 
 use egui::{
-    Color32, DragValue, Painter, Pos2, Shape, Stroke, Vec2, epaint::CubicBezierShape,
-    global_theme_preference_buttons,
+    Color32, Painter, Pos2, Shape, Stroke, Vec2, epaint::CubicBezierShape,
 };
 
 pub fn circular_arc_stroke(
