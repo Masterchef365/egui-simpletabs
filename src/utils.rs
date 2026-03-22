@@ -1,3 +1,5 @@
+use std::ops::Mul;
+
 use egui::{
     epaint::CubicBezierShape, global_theme_preference_buttons, Color32, DragValue, Painter, Pos2,
     Shape, Stroke, Vec2,
@@ -9,9 +11,10 @@ pub fn circular_arc(
     radius: f32,
     begin_angle: f32,
     end_angle: f32,
-    n_segments: usize,
+    resolution: f32,
     stroke: Stroke,
 ) {
+    let n_segments = (end_angle - begin_angle).mul(resolution).abs().ceil().clamp(0.0, 100.0) as usize;
     for points in circular_arc_beziers(center, radius, begin_angle, end_angle, n_segments) {
         let shape =
             CubicBezierShape::from_points_stroke(points, false, Color32::TRANSPARENT, stroke);

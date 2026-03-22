@@ -49,12 +49,12 @@ fn main() {
 
             ui.horizontal(|ui| {
                 ui.checkbox(&mut has_min, "Has min");
-                ui.add(DragValue::new(&mut min));
+                ui.add(DragValue::new(&mut min).speed(1e-2));
             });
 
             ui.horizontal(|ui| {
                 ui.checkbox(&mut has_max, "Has max");
-                ui.add(DragValue::new(&mut max));
+                ui.add(DragValue::new(&mut max).speed(1e-2));
             });
 
             ui.checkbox(&mut invert, "Invert");
@@ -75,7 +75,7 @@ fn main() {
 
             let pos = ui.next_widget_position() + Vec2::splat(50.0);
             ui.painter().circle_stroke(pos, 20.0, Stroke::new(2.0, Color32::RED));
-            circular_arc(ui.painter(), pos, 20.0, min, max, 2, Stroke::new(2.0, Color32::WHITE));
+            circular_arc(ui.painter(), pos, 20.0, min, max, 1.0, Stroke::new(2.0, Color32::WHITE));
         });
     })
     .unwrap();
