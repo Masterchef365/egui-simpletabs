@@ -20,7 +20,11 @@ pub fn circular_arc_stroke(
 
     let end_angle = begin_angle + (end_angle - begin_angle).clamp(0.0, std::f32::consts::TAU);
 
-    let n_segments = (end_angle - begin_angle).mul(resolution).abs().ceil().clamp(0.0, 100.0) as usize;
+    let n_segments = (end_angle - begin_angle)
+        .mul(resolution)
+        .abs()
+        .ceil()
+        .clamp(0.0, 100.0) as usize;
     for points in circular_arc_beziers(center, radius, begin_angle, end_angle, n_segments) {
         let shape =
             CubicBezierShape::from_points_stroke(points, false, Color32::TRANSPARENT, stroke);
@@ -28,7 +32,7 @@ pub fn circular_arc_stroke(
     }
 }
 
-pub fn circular_arc_beziers(
+fn circular_arc_beziers(
     center: Pos2,
     radius: f32,
     begin_angle: f32,
@@ -48,7 +52,7 @@ pub fn circular_arc_beziers(
     })
 }
 
-pub fn circular_arc_bezier(
+fn circular_arc_bezier(
     center: Pos2,
     radius: f32,
     begin_angle: f32,
@@ -66,7 +70,7 @@ pub fn circular_arc_bezier(
     )
 }
 
-pub fn arc_from_derivatives(
+fn arc_from_derivatives(
     begin_pos: Pos2,
     begin_deriv: Vec2,
     end_pos: Pos2,
