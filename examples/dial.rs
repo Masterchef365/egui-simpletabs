@@ -9,7 +9,7 @@ use egui_simpletabs::{
 };
 
 fn main() {
-    let mut value = 10f64;
+    let mut value = 1f64;
 
     let mut drag_mode = DragMode::default();
 
@@ -29,13 +29,13 @@ fn main() {
 
     let mut value_per_radian = 1.0;
 
-    let mut has_snap = false;
-    let mut snap_thresh = 1e-2;
-
-    let snap = has_snap.then(|| snap_thresh);
+    let mut has_snap = true;
+    let mut snap_thresh = 0.05;
 
     let options = eframe::NativeOptions::default();
     eframe::run_simple_native("Dial test", options, move |ctx, _frame| {
+        let snap = has_snap.then(|| snap_thresh);
+
         egui::CentralPanel::default().show(ctx, |ui| {
             global_theme_preference_buttons(ui);
 

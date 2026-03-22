@@ -28,9 +28,9 @@ pub struct DialPosition {
 #[derive(Copy, Clone, Debug, Default, PartialEq, Eq)]
 pub enum DragMode {
     DistanceFromCenter,
-    #[default]
     CoordinateY,
     CoordinateX,
+    #[default]
     Radial,
 }
 
@@ -208,7 +208,7 @@ impl Widget for Dial<'_> {
 
         // Knob
         let center = resp.rect.center();
-        let value = get(&mut self.get_set_value);
+        let mut value = get(&mut self.get_set_value);
         let angle = self.angle_for_value(value);
         draw_knob(ui, center, angle, self.knob_radius);
 
@@ -232,20 +232,20 @@ impl Widget for Dial<'_> {
             let delta = self
                 .drag_mode
                 .calculate_delta(mouse_pos - center, resp.drag_delta());
-            let mut new = value + delta as f64 * self.mouse_sensitivity * self.value_per_angle;
+            value += delta as f64 * self.mouse_sensitivity * self.value_per_angle;
 
             if let Some(max) = self.max_value {
-                new = new.min(max);
+                value = value.min(max);
             }
 
             if let Some(min) = self.min_value {
-                new = new.max(min);
+                value = value.max(min);
             }
 
-            set(&mut self.get_set_value, new);
+            set(&mut self.get_set_value, value);
         }
 
-        let current_angle = self.angle_for_value(value);
+        let angle = self.angle_for_value(value);
 
         // Positions
         for position in &self.positions {
@@ -254,17 +254,17 @@ impl Widget for Dial<'_> {
                 position_stroke.color = color;
             }
 
-            let angle = self.angle_for_value(position.value);
+            let pos_angle = self.angle_for_value(position.value);
 
             // Snap
             if let Some(snap_thresh) = position.snap {
-                if (angle - current_angle).abs() < snap_thresh as f64 {
+                if (pos_angle - angle).abs() < snap_thresh as f64 {
                     set(&mut self.get_set_value, position.value);
                 }
             }
 
             // Drawing
-            let vect = Vec2::angled(angle as _);
+            let vect = Vec2::angled(pos_angle as _);
 
             let r = self.markings_offset + self.knob_radius;
             let p1 = center + vect * r;
