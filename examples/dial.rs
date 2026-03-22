@@ -13,11 +13,8 @@ fn main() {
 
     let mut drag_mode = DragMode::default();
 
-    let mut has_min = true;
-    let mut has_max = true;
-
     let mut min: IndecisiveOption<f32> = Some(-1.0).into();
-    let mut max: IndecisiveOption<f32> = Some(1.0).into();
+    let mut max: IndecisiveOption<f32> = Some(2.0).into();
 
     let mut invert = false;
 
@@ -28,6 +25,8 @@ fn main() {
     let mut mouse_sensitivity = 5e-2;
 
     let mut value_per_radian = 1.0;
+
+    let mut show_livezone = true;
 
     let mut snap: IndecisiveOption<f32> = Some(0.05).into();
 
@@ -47,13 +46,21 @@ fn main() {
                     .invert(invert)
                     .origin_angle(origin_angle)
                     .mouse_sensitivity(mouse_sensitivity)
+                    .show_livezone(show_livezone)
                     .with_position(
                         DialPosition::new(0)
                             .label("Zero")
                             .snap(snap.into())
                             .underline(underline)
                             .color(Color32::DARK_GREEN),
+                    )
+                    .with_position(
+                        DialPosition::new(1)
+                            .label("One")
+                            .snap(snap.into())
+                            .underline(underline)
                     );
+
 
                 if let Some(min) = min.into_option() {
                     dial = dial.with_position(
@@ -101,6 +108,7 @@ fn main() {
             ui.checkbox(&mut invert, "Invert");
 
             ui.checkbox(&mut underline, "Underline");
+            ui.checkbox(&mut show_livezone, "Show live zone");
 
             ui.horizontal(|ui| {
                 ui.label("Origin angle: ");
