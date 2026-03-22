@@ -57,7 +57,7 @@ impl<'a> Dial<'a> {
         let knob_radius: f32 = 25.0;
         Self {
             get_set_value: Box::new(get_set_value),
-            mouse_sensitivity: std::f64::consts::TAU / knob_radius as f64,
+            mouse_sensitivity: 5e-2,
             origin_angle: std::f64::consts::FRAC_PI_2,
             origin_value: 0.0,
             value_per_angle: 1.0,
@@ -96,14 +96,14 @@ impl<'a> Dial<'a> {
     }
 
     /// Sets the min value
-    pub fn min_value<Num: Numeric>(mut self, value: Num) -> Self {
-        self.min_value = Some(value.to_f64());
+    pub fn min_value<Num: Numeric>(mut self, value: Option<Num>) -> Self {
+        self.min_value = value.map(|v| v.to_f64());
         self
     }
 
     /// Sets the max value
-    pub fn max_value<Num: Numeric>(mut self, value: Num) -> Self {
-        self.max_value = Some(value.to_f64());
+    pub fn max_value<Num: Numeric>(mut self, value: Option<Num>) -> Self {
+        self.max_value = value.map(|v| v.to_f64());
         self
     }
 
@@ -131,8 +131,8 @@ impl<'a> Dial<'a> {
     pub fn range<Num: Numeric>(self, range: RangeInclusive<Num>, deadzone: Option<f64>) -> Self {
         let usable_radians = std::f64::consts::TAU - deadzone.unwrap_or(0.0);
         let value_range = range.end().to_f64() - range.start().to_f64();
-        self.min_value(*range.start())
-            .max_value(*range.end())
+        self.min_value(Some(*range.start()))
+            .max_value(Some(*range.end()))
             .origin_value(*range.start())
             .value_per_radian(value_range / usable_radians)
     }
@@ -162,11 +162,11 @@ impl Widget for Dial<'_> {
             let mut new = value + delta as f64 * self.mouse_sensitivity * self.value_per_angle;
 
             if let Some(max) = self.max_value {
-                new = new.max(max);
+                new = new.min(max);
             }
 
             if let Some(min) = self.min_value {
-                new = new.min(min);
+                new = new.max(min);
             }
 
             set(&mut self.get_set_value, new);
