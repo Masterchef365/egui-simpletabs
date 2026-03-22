@@ -48,6 +48,7 @@ fn main() {
                         .max_value(has_max.then(|| max))
                         .invert(invert)
                         .origin_angle(origin_angle)
+                        .mouse_sensitivity(mouse_sensitivity)
                         .with_position(DialPosition::new(min).label("Min").snap(snap).underline(underline))
                         .with_position(DialPosition::new(0).label("Zero").snap(snap).underline(underline).color(Color32::DARK_GREEN))
                         .with_position(DialPosition::new(max).label("Max").snap(snap).underline(underline))
