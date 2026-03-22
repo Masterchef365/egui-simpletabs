@@ -2,7 +2,7 @@ use std::ops::RangeInclusive;
 
 use egui::{Color32, Pos2, Rect, Response, Sense, Ui, Vec2, Widget, emath::Numeric};
 
-use crate::utils::circular_arc_stroke;
+use crate::utils::{circular_arc_stroke, throttle};
 
 type GetSetValue<'a> = Box<dyn 'a + FnMut(Option<f64>) -> f64>;
 fn get(get_set_value: &mut GetSetValue<'_>) -> f64 {
@@ -34,6 +34,13 @@ pub enum DragMode {
     Radial,
 }
 
+pub enum TurningMode {
+    /// Knob can move in 
+    Analog,
+    Positional,
+    Integral,
+}
+
 /// A Dial widget
 pub struct Dial<'a> {
     get_set_value: GetSetValue<'a>,
@@ -44,7 +51,7 @@ pub struct Dial<'a> {
     // /// Value at the origin
     // pub origin_value: f64,
     /// Change in value per change in angle (radians)
-    pub value_per_angle: f64,
+    pub value_per_radian: f64,
     /// The maximum value allowed (if any)
     pub max_value: Option<f64>,
     /// The minimum value allowed (if any)
@@ -58,16 +65,18 @@ pub struct Dial<'a> {
     /// Display a circular arc around the active area of the dial,
     /// at the specific distance from the knob (if any)
     pub show_livezone: bool,
-    /// Marked dial positions
-    pub positions: Vec<DialPosition>,
     /// How far away any markings are fromt he dial
     pub markings_offset: f32,
+    /// How is the knob free to move?
+    pub turning_mode: TurningMode,
+    /// Marked dial positions
+    pub positions: Vec<DialPosition>,
 }
 
 impl<'a> Dial<'a> {
     /// Creates a new dial with the default range and no clamping
     pub fn new<Num: Numeric>(value: &'a mut Num) -> Self {
-        Self::from_get_set(move |v: Option<f64>| {
+        Self::from_get_set::<Num>(move |v: Option<f64>| {
             if let Some(v) = v {
                 *value = Num::from_f64(v);
             }
@@ -75,14 +84,14 @@ impl<'a> Dial<'a> {
         })
     }
 
-    pub fn from_get_set(get_set_value: impl 'a + FnMut(Option<f64>) -> f64) -> Self {
+    fn from_get_set<Num: Numeric>(get_set_value: impl 'a + FnMut(Option<f64>) -> f64) -> Self {
         let knob_radius: f32 = 25.0;
         Self {
             get_set_value: Box::new(get_set_value),
-            mouse_sensitivity: 5e-2,
+            mouse_sensitivity: match Num::INTEGRAL { true => 1.0, false => 5e-2 },
             origin_angle: -std::f64::consts::FRAC_PI_2,
             //origin_value: 0.0,
-            value_per_angle: 1.0,
+            value_per_radian: 1.0,
             min_value: None,
             max_value: None,
             desired_size: Vec2::new(200.0, 100.0),
@@ -91,6 +100,7 @@ impl<'a> Dial<'a> {
             show_livezone: true,
             positions: Vec::new(),
             markings_offset: 5.0,
+            turning_mode: match Num::INTEGRAL { true => TurningMode::Integral, false => TurningMode::Analog },
         }
     }
 
@@ -116,7 +126,7 @@ impl<'a> Dial<'a> {
 
     /// Sets the amount the value changes for each radian turned. See also `Self::mouse_sensitivity`.
     pub fn value_per_radian(mut self, value: f64) -> Self {
-        self.value_per_angle = value.to_f64();
+        self.value_per_radian = value.to_f64();
         self
     }
 
@@ -153,7 +163,7 @@ impl<'a> Dial<'a> {
     /// Whether to invert the direction of rotation (Defaults to clockwise = increase)
     pub fn invert(mut self, invert: bool) -> Self {
         if invert {
-            self.value_per_angle *= -1.0;
+            self.value_per_radian *= -1.0;
         }
         self
     }
@@ -190,13 +200,13 @@ impl<'a> Dial<'a> {
 
     /// Returns the angle for a given value
     fn value_for_angle(&self, angle: f64) -> f64 {
-        (angle - self.origin_angle) * self.value_per_angle // + self.origin_value
+        (angle - self.origin_angle) * self.value_per_radian // + self.origin_value
     }
 
     /// Returns the angle for a given value
     fn angle_for_value(&self, value: f64) -> f64 {
         //(value - self.origin_value) / self.value_per_angle + self.origin_angle
-        value / self.value_per_angle + self.origin_angle
+        value / self.value_per_radian + self.origin_angle
     }
 }
 
@@ -239,8 +249,18 @@ impl Widget for Dial<'_> {
         {
             let delta = self
                 .drag_mode
-                .calculate_delta(mouse_pos - center, knob_resp.drag_delta());
-            value += delta as f64 * self.mouse_sensitivity * self.value_per_angle;
+                .calculate_delta(mouse_pos - center, knob_resp.drag_delta()) as f64;
+
+            match self.turning_mode {
+                TurningMode::Analog => value += delta * self.mouse_sensitivity * self.value_per_radian,
+                TurningMode::Integral => if delta.abs() * self.mouse_sensitivity > 1.0 { 
+                    if throttle(ui.ctx(), "knob", 5.) {
+                        value += delta.signum();
+                    }
+                },
+                TurningMode::Positional => todo!(),
+            }
+
             knob_resp.mark_changed();
 
             if let Some(max) = self.max_value {
@@ -360,6 +380,8 @@ impl DialPosition {
         }
     }
 
+    /// Applies only to Analog TurningMode; snap to the value if within the given number of
+    /// radians.
     pub fn snap(mut self, snap_threshold_radians: Option<f32>) -> Self {
         self.snap = snap_threshold_radians;
         self

@@ -1,6 +1,6 @@
-use std::ops::Mul;
+use std::{ops::Mul, time::Instant};
 
-use egui::{Color32, Painter, Pos2, Response, Shape, Stroke, Ui, Vec2, epaint::CubicBezierShape};
+use egui::{Color32, Context, Id, Painter, Pos2, Response, Shape, Stroke, Ui, Vec2, epaint::CubicBezierShape};
 
 pub fn circular_arc_stroke(
     painter: &Painter,
@@ -85,6 +85,8 @@ fn arc_from_derivatives(
     ]
 }
 
+/// Semantically edits an Option<T>, and remembers the contents of its 'Some(T)' variants
+/// even if it is None. Implements From/Into Option<T>. Call .show()
 #[derive(Clone, Copy)]
 pub struct IndecisiveOption<T> {
     pub is_some: bool,
@@ -123,4 +125,20 @@ impl<T: Default> IndecisiveOption<T> {
         })
         .response
     }
+}
+
+/// When called repeatedly, will only return true once every 1/`max_per_second` seconds.
+/// Key must be unique only among concurrent throttles. 
+pub fn throttle(ctx: &Context, key: impl Into<Id>, max_per_second: f64) -> bool {
+    let now = ctx.input(|inp| inp.time);
+    ctx.memory_mut(|mem| {
+        let inst = mem.data.get_temp_mut_or_insert_with(key.into(), || now);
+        let elapsed = now - *inst;
+        if elapsed * max_per_second > 1.0 {
+            *inst = now;
+            true
+        } else {
+            false
+        }
+    })
 }

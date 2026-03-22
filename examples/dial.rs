@@ -9,7 +9,7 @@ fn main() {
 
     let mut drag_mode = DragMode::default();
 
-    let mut min: IndecisiveOption<f32> = Some(-1.0).into();
+    let mut min: IndecisiveOption<f32> = Some(-2.0).into();
     let mut max: IndecisiveOption<f32> = Some(2.0).into();
 
     let mut invert = false;
@@ -25,6 +25,8 @@ fn main() {
     let mut show_livezone = true;
 
     let mut snap: IndecisiveOption<f32> = Some(0.05).into();
+
+    let mut value_int: i32 = 1;
 
     let options = eframe::NativeOptions::default();
     eframe::run_simple_native("Dial test", options, move |ctx, _frame| {
@@ -94,53 +96,102 @@ fn main() {
         });
 
         egui::CentralPanel::default().show(ctx, |ui| {
-            ui.heading("Dial test");
+            ui.group(|ui| {
+                ui.heading("Dial (float)");
 
-            let mut dial = Dial::new(&mut value)
-                .drag_mode(drag_mode)
-                .value_per_radian(value_per_radian)
-                .min_value(min.into_option())
-                .max_value(max.into_option())
-                .invert(invert)
-                .origin_angle(origin_angle)
-                .mouse_sensitivity(mouse_sensitivity)
-                .show_livezone(show_livezone)
-                .with_position(
-                    DialPosition::new(0)
-                        .label("Zero")
-                        .snap(snap.into())
-                        .underline(underline)
-                        .color(Color32::DARK_GREEN),
-                )
-                .with_position(
-                    DialPosition::new(1)
-                        .label("One")
-                        .snap(snap.into())
-                        .underline(underline),
-                );
+                let mut dial = Dial::new(&mut value)
+                    .drag_mode(drag_mode)
+                    .value_per_radian(value_per_radian)
+                    .min_value(min.into_option())
+                    .max_value(max.into_option())
+                    .invert(invert)
+                    .origin_angle(origin_angle)
+                    .mouse_sensitivity(mouse_sensitivity)
+                    .show_livezone(show_livezone)
+                    .with_position(
+                        DialPosition::new(0)
+                            .label("Zero")
+                            .snap(snap.into())
+                            .underline(underline)
+                            .color(Color32::DARK_GREEN),
+                    )
+                    .with_position(
+                        DialPosition::new(1)
+                            .label("One")
+                            .snap(snap.into())
+                            .underline(underline),
+                    );
 
-            if let Some(min) = min.into_option() {
-                dial = dial.with_position(
-                    DialPosition::new(min)
-                        .label("Min")
-                        .snap(snap.into())
-                        .underline(underline),
-                );
-            }
+                if let Some(min) = min.into_option() {
+                    dial = dial.with_position(
+                        DialPosition::new(min)
+                            .label("Min")
+                            .snap(snap.into())
+                            .underline(underline),
+                    );
+                }
 
-            if let Some(max) = max.into_option() {
-                dial = dial.with_position(
-                    DialPosition::new(max)
-                        .label("Max")
-                        .snap(snap.into())
-                        .underline(underline),
-                );
-            }
+                if let Some(max) = max.into_option() {
+                    dial = dial.with_position(
+                        DialPosition::new(max)
+                            .label("Max")
+                            .snap(snap.into())
+                            .underline(underline),
+                    );
+                }
 
-            ui.add(dial);
-            ui.add(DragValue::new(&mut value).speed(1e-2));
+                ui.add(dial);
+                ui.add(DragValue::new(&mut value).speed(1e-2));
+            });
 
-            ui.label("Double click labels to jump to them");
+            ui.group(|ui| {
+                ui.heading("Dial (integer value)");
+                let mut dial = Dial::new(&mut value_int)
+                    .drag_mode(drag_mode)
+                    .value_per_radian(value_per_radian)
+                    .min_value(min.into_option().map(|v| v.floor()))
+                    .max_value(max.into_option().map(|v| v.ceil()))
+                    .invert(invert)
+                    .origin_angle(origin_angle)
+                    .mouse_sensitivity(mouse_sensitivity * 20.0)
+                    .show_livezone(show_livezone)
+                    .with_position(
+                        DialPosition::new(0)
+                            .label("Zero")
+                            .snap(snap.into())
+                            .underline(underline)
+                            .color(Color32::DARK_GREEN),
+                    )
+                    .with_position(
+                        DialPosition::new(1)
+                            .label("One")
+                            .snap(snap.into())
+                            .underline(underline),
+                    );
+
+                if let Some(min) = min.into_option() {
+                    dial = dial.with_position(
+                        DialPosition::new(min.floor())
+                            .label("Min")
+                            .snap(snap.into())
+                            .underline(underline),
+                    );
+                }
+
+                if let Some(max) = max.into_option() {
+                    dial = dial.with_position(
+                        DialPosition::new(max.ceil())
+                            .label("Max")
+                            .snap(snap.into())
+                            .underline(underline),
+                    );
+                }
+
+                ui.add(dial);
+                ui.add(DragValue::new(&mut value_int).speed(1e-2));
+            });
+
+            ui.label("Double click labels to snap to their position");
         });
     })
     .unwrap();
