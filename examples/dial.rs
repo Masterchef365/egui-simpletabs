@@ -49,7 +49,7 @@ fn main() {
                 });
 
                 ui.horizontal(|ui| {
-                    ui.label("Value per radian");
+                    ui.label("Scale");
                     ui.add(DragValue::new(&mut value_per_radian).speed(1e-2));
                 });
 
@@ -77,7 +77,7 @@ fn main() {
                 ui.horizontal(|ui| {
                     ui.label("Snap: ");
                     snap.show(ui, |ui, snap_thresh| {
-                        ui.add(DragValue::new(snap_thresh).speed(1e-2))
+                        ui.add(DragValue::new(snap_thresh).prefix("Tolerance: ").speed(1e-2))
                     });
                     //ui.checkbox(&mut has_snap, "Snap");
                     //ui.add_enabled(has_snap, DragValue::new(&mut snap_thresh).speed(1e-2));
