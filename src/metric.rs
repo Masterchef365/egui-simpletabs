@@ -37,7 +37,7 @@ pub fn from_metric_prefix<'s>(s: &'s str, unit: &str) -> Result<f64, ()> {
     let mut s = s.trim();
 
     if s.ends_with(unit) {
-        s = &s[0..s.len()-unit.len()];
+        s = &s[0..s.len() - unit.len()];
     }
 
     let value_end = s
@@ -66,9 +66,11 @@ pub fn from_metric_prefix<'s>(s: &'s str, unit: &str) -> Result<f64, ()> {
 }
 
 /// Adds parsers and formatters to a DragValue for the metric prefix
-pub fn metric_prefix_dragvalue<'a>(drag: egui::DragValue<'a>, unit: &'static str) -> egui::DragValue<'a> {
-    drag
-        .custom_parser(move |s| from_metric_prefix(s, unit).ok())
+pub fn metric_prefix_dragvalue<'a>(
+    drag: egui::DragValue<'a>,
+    unit: &'static str,
+) -> egui::DragValue<'a> {
+    drag.custom_parser(move |s| from_metric_prefix(s, unit).ok())
         .custom_formatter(move |value, _| to_metric_prefix(value, unit))
 }
 

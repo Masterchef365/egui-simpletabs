@@ -1,6 +1,8 @@
 use std::ops::RangeInclusive;
 
-use egui::{emath::Numeric, Painter, Pos2, Response, Ui, Vec2, Widget};
+use egui::{Painter, Pos2, Response, Ui, Vec2, Widget, emath::Numeric};
+
+use crate::utils::circular_arc_stroke;
 
 type GetSetValue<'a> = Box<dyn 'a + FnMut(Option<f64>) -> f64>;
 fn get(get_set_value: &mut GetSetValue<'_>) -> f64 {
@@ -38,8 +40,11 @@ pub struct Dial<'a> {
     pub desired_size: Vec2,
     /// The radius of the knob
     pub knob_radius: f32,
-    /// The way the mouse drag works 
+    /// The way the mouse drag works
     pub drag_mode: DragMode,
+    /// Display a circular arc around the active area of the dial,
+    /// at the specific distance from the knob (if any)
+    pub show_livezone: Option<f32>,
 }
 
 impl<'a> Dial<'a> {
@@ -66,6 +71,7 @@ impl<'a> Dial<'a> {
             desired_size: Vec2::new(200.0, 100.0),
             knob_radius,
             drag_mode: DragMode::default(),
+            show_livezone: Some(5.0),
         }
     }
 
@@ -133,6 +139,13 @@ impl<'a> Dial<'a> {
         self
     }
 
+    /// Display a circular arc around the active area of the dial,
+    /// at the specific distance from the knob (if any)
+    pub fn show_livezone(mut self, livezone: Option<f32>) -> Self {
+        self.show_livezone = livezone;
+        self
+    }
+
     /// Shorthand for distributing the range of values between min and max, optionally avoiding
     /// 'deadzone' radians (leaving that as unreachable space between the max and min values)
     pub fn range<Num: Numeric>(self, range: RangeInclusive<Num>, deadzone: Option<f64>) -> Self {
@@ -157,15 +170,38 @@ impl<'a> Dial<'a> {
 
 impl Widget for Dial<'_> {
     fn ui(mut self, ui: &mut Ui) -> Response {
+        // Response
         let resp = ui.allocate_response(self.desired_size, egui::Sense::drag());
+        let stroke = ui.style().visuals.widgets.active.fg_stroke;
 
+        // Knob
         let center = resp.rect.center();
         let value = get(&mut self.get_set_value);
         let angle = self.angle_for_value(value);
         draw_knob(ui, center, angle, self.knob_radius);
 
-        if let Some(mouse_pos) = resp.interact_pointer_pos() && resp.dragged() {
-            let delta = self.drag_mode.calculate_delta(mouse_pos - center, resp.drag_delta());
+        // Arc around knob
+        if let (Some(min), Some(max), Some(dist)) =
+            (self.min_value, self.max_value, self.show_livezone)
+        {
+            circular_arc_stroke(
+                ui.painter(),
+                center,
+                self.knob_radius + dist,
+                self.angle_for_value(min) as f32,
+                self.angle_for_value(max) as f32,
+                1.0,
+                stroke,
+            );
+        }
+
+        // Interaction with knob
+        if let Some(mouse_pos) = resp.interact_pointer_pos()
+            && resp.dragged()
+        {
+            let delta = self
+                .drag_mode
+                .calculate_delta(mouse_pos - center, resp.drag_delta());
             let mut new = value + delta as f64 * self.mouse_sensitivity * self.value_per_angle;
 
             if let Some(max) = self.max_value {
