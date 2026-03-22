@@ -11,6 +11,15 @@ fn set(get_set_value: &mut GetSetValue<'_>, value: f64) {
     (get_set_value)(Some(value));
 }
 
+#[derive(Copy, Clone, Debug, Default, PartialEq, Eq)]
+pub enum DragMode {
+    DistanceFromCenter,
+    #[default]
+    CoordinateY,
+    CoordinateX,
+    Radial,
+}
+
 pub struct Dial<'a> {
     get_set_value: GetSetValue<'a>,
     /// Change in angle (in radians) per change in mouse position
@@ -29,6 +38,8 @@ pub struct Dial<'a> {
     pub desired_size: Vec2,
     /// The radius of the knob
     pub knob_radius: f32,
+    /// The way the mouse drag works 
+    pub drag_mode: DragMode,
 }
 
 impl<'a> Dial<'a> {
@@ -54,6 +65,7 @@ impl<'a> Dial<'a> {
             max_value: None,
             desired_size: Vec2::new(200.0, 100.0),
             knob_radius,
+            drag_mode: DragMode::default(),
         }
     }
 
@@ -107,6 +119,13 @@ impl<'a> Dial<'a> {
         self
     }
 
+    /// Sets the mode in which the mouse affects the radial position
+    pub fn drag_mode(mut self, mode: DragMode) -> Self {
+        self.drag_mode = mode;
+        self
+    }
+
+
     /// Shorthand for distributing the range of values between min and max, optionally avoiding
     /// 'deadzone' radians (leaving that as unreachable space between the max and min values)
     pub fn range<Num: Numeric>(self, range: RangeInclusive<Num>, deadzone: Option<f64>) -> Self {
@@ -138,8 +157,8 @@ impl Widget for Dial<'_> {
         let angle = self.angle_for_value(value);
         draw_knob(ui, center, angle, self.knob_radius);
 
-        if resp.dragged() {
-            let delta = resp.drag_delta().y;
+        if let Some(mouse_pos) = resp.interact_pointer_pos() && resp.dragged() {
+            let delta = self.drag_mode.calculate_delta(mouse_pos - center, resp.drag_delta());
             let mut new = value + delta as f64 * self.mouse_sensitivity * self.value_per_angle;
 
             if let Some(max) = self.max_value {
@@ -168,4 +187,19 @@ fn draw_knob(ui: &Ui, center: Pos2, angle: f64, radius: f32) {
 
     ui.painter()
         .line_segment([f(radius / 2.0), f(radius)], stroke);
+}
+
+impl DragMode {
+    pub fn calculate_delta(&self, relpos: Vec2, drag_delta: Vec2) -> f32 {
+        match self {
+            Self::Radial => cross2d(relpos.normalized(), drag_delta),
+            Self::DistanceFromCenter => relpos.normalized().dot(drag_delta),
+            Self::CoordinateY => drag_delta.y,
+            Self::CoordinateX => drag_delta.x,
+        }
+    }
+}
+
+fn cross2d(a: Vec2, b: Vec2) -> f32 {
+    a.x * b.y - a.y * b.x
 }
