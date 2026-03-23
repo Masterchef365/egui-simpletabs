@@ -1,12 +1,12 @@
 //! Tab shaped buttons
 use egui::{
-    NumExt, Response, Sense, Shape, Stroke, TextStyle, Ui, Vec2, Widget, WidgetInfo, WidgetText,
-    WidgetType,
+    CornerRadius, NumExt, Response, Sense, Shape, Stroke, TextStyle, Ui, Vec2, Widget, WidgetInfo, WidgetText, WidgetType
 };
 
 pub struct TabWidget {
-    selected: bool,
-    text: WidgetText,
+    pub selected: bool,
+    pub text: WidgetText,
+    pub corner_radius: u8,
 }
 
 pub trait TabWidgetExt {
@@ -55,7 +55,13 @@ impl TabWidget {
         Self {
             selected,
             text: text.into(),
+            corner_radius: 2,
         }
+    }
+
+    pub fn with_corner_radius(mut self, corner_radius: u8) -> Self {
+        self.corner_radius = corner_radius;
+        self
     }
 }
 
@@ -66,7 +72,7 @@ fn tab_edge_vect(ui: &mut Ui) -> Vec2 {
 
 impl Widget for TabWidget {
     fn ui(self, ui: &mut Ui) -> Response {
-        let Self { selected, text } = self;
+        let Self { selected, text, corner_radius } = self;
 
         let button_padding = ui.spacing().button_padding;
         let total_extra = button_padding + button_padding;
@@ -102,9 +108,16 @@ impl Widget for TabWidget {
                 ui.style().visuals.window_stroke()
             };
 
+            let corners = CornerRadius {
+                nw: corner_radius,
+                ne: corner_radius,
+                sw: 0,
+                se: 0,
+            };
+
             ui.painter().rect_stroke(
                 rect,
-                0.0,
+                corners,
                 if response.hovered() && !selected {
                     Stroke::new(1.0, ui.style().visuals.text_color())
                 } else {
