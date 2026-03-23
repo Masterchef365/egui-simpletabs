@@ -1,6 +1,6 @@
 #[derive(Clone, PartialEq, Eq)]
 enum Choices {
-    A, B, C
+    A, B, C, D, E
 }
 
 fn main() {
@@ -13,6 +13,8 @@ fn main() {
                 (Choices::A, "A"),
                 (Choices::B, "B"),
                 (Choices::C, "C"),
+                (Choices::D, "D"),
+                (Choices::E, "E"),
             ]);
         });
     })

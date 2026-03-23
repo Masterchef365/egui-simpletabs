@@ -666,9 +666,9 @@ impl KnobStyle {
 
 pub fn choice<T: PartialEq + Clone>(ui: &mut Ui, value: &mut T, choices: &[(T, &'static str)]) {
     let mut idx = choices.iter().position(|(v, _)| v == value).unwrap();
-    let spacing = 1.0;
+    let spacing = choices.len() as f64 / std::f64::consts::TAU;
 
-    let mut dial = Dial::new(&mut idx).value_per_radian(1.0 / spacing).turning_mode(TurningMode::Positional);
+    let mut dial = Dial::new(&mut idx).value_per_radian(spacing).turning_mode(TurningMode::Positional);
     for (idx, (_key, label)) in choices.iter().enumerate() {
         dial = dial.with_position(DialPosition::new(idx).label(*label));
     }
