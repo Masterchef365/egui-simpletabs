@@ -1,3 +1,4 @@
+//! A handful of simple buttons
 use egui::{Color32, RichText, Ui};
 
 pub fn play_pause_button(ui: &mut Ui, paused: &mut bool) {

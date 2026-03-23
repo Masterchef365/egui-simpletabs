@@ -1,3 +1,4 @@
+//! Skeuomorphic dials
 use std::ops::RangeInclusive;
 
 use egui::{
@@ -27,6 +28,7 @@ pub struct DialPosition {
     snap: Option<f32>,
 }
 
+/// How a drag motion affects the knob
 #[derive(Copy, Clone, Debug, Default, PartialEq, Eq)]
 pub enum DragMode {
     DistanceFromCenter,
@@ -36,6 +38,7 @@ pub enum DragMode {
     Radial,
 }
 
+/// Which positions are valid for the knob
 #[derive(Copy, Clone, Debug, Default, PartialEq, Eq)]
 pub enum TurningMode {
     /// Knob can move in to any position
@@ -47,6 +50,7 @@ pub enum TurningMode {
     Integral,
 }
 
+/// A series of marks on the dial, on an interval.
 #[derive(Copy, Clone)]
 pub struct ScaleMarking {
     pub length: f32,

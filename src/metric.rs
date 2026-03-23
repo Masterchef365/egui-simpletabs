@@ -1,3 +1,5 @@
+//! Metric prefix unilities
+
 /// Prefixes which will be displayed
 const PREFIXES: [&'static str; 17] = [
     "y", "z", "a", "f", "p", "n", "μ", "m", "", "k", "M", "G", "T", "P", "E", "Z", "Y",

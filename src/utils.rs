@@ -1,3 +1,4 @@
+//! Utilities
 use std::ops::Mul;
 
 use egui::{
