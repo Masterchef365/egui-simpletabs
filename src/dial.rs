@@ -1,6 +1,8 @@
 use std::ops::RangeInclusive;
 
-use egui::{Color32, Pos2, Rect, Response, Sense, Ui, Vec2, Widget, emath::Numeric};
+use egui::{
+    Color32, Painter, Pos2, Rect, Response, Sense, Stroke, Ui, Vec2, Widget, emath::Numeric,
+};
 
 use crate::utils::{circular_arc_stroke, throttle};
 
@@ -45,6 +47,13 @@ pub enum TurningMode {
     Integral,
 }
 
+#[derive(Copy, Clone)]
+pub struct ScaleMarking {
+    pub length: f32,
+    pub interval: f64,
+    pub stroke: Option<Stroke>,
+}
+
 /// A Dial widget
 pub struct Dial<'a> {
     get_set_value: GetSetValue<'a>,
@@ -73,10 +82,12 @@ pub struct Dial<'a> {
     pub markings_offset: f32,
     /// How is the knob free to move?
     pub turning_mode: TurningMode,
-    /// Marked dial positions
-    positions: Vec<DialPosition>,
     /// How many discrete moves the dial may make per second
     pub throttle_turn_rate: f64,
+    /// Scale markings
+    scale_markings: Vec<ScaleMarking>,
+    /// Marked dial positions
+    positions: Vec<DialPosition>,
 }
 
 impl<'a> Dial<'a> {
@@ -114,6 +125,7 @@ impl<'a> Dial<'a> {
                 false => TurningMode::Analog,
             },
             throttle_turn_rate: 5.0,
+            scale_markings: vec![],
         }
     }
 
@@ -222,8 +234,18 @@ impl<'a> Dial<'a> {
         self.positions.push(position);
 
         // We sort here, so that we can easily traverse for indices
-        self.positions.sort_by(|a, b| a.value.partial_cmp(&b.value).unwrap_or(std::cmp::Ordering::Equal));
+        self.positions.sort_by(|a, b| {
+            a.value
+                .partial_cmp(&b.value)
+                .unwrap_or(std::cmp::Ordering::Equal)
+        });
 
+        self
+    }
+
+    /// Add a series of markings to the dial
+    pub fn with_scale_marking(mut self, marking: ScaleMarking) -> Self {
+        self.scale_markings.push(marking);
         self
     }
 
@@ -243,8 +265,28 @@ impl Widget for Dial<'_> {
         // Background response
         let background_area = Rect::from_min_size(ui.cursor().min, self.desired_size);
 
-        // Knob
         let center = background_area.center();
+
+        // Scale markings
+        if let (Some(min), Some(max)) = (self.min_value, self.max_value) {
+            for marking in &self.scale_markings {
+                let n = ((max - min) / marking.interval).floor() as usize;
+                for i in 0..n {
+                    let t = i as f64 / n as f64;
+                    let angle = self.angle_for_value(min + (max - min) * t);
+                    let r_inner = self.knob_radius + self.markings_offset;
+                    let r_outer = r_inner + marking.length;
+
+                    let p_inner = center + Vec2::angled(angle as _) * r_inner;
+                    let p_outer = center + Vec2::angled(angle as _) * r_outer;
+                    let stroke = marking.stroke.unwrap_or(ui.style().visuals.widgets.noninteractive.fg_stroke);
+
+                    ui.painter().line_segment([p_inner, p_outer], stroke);
+                }
+            }
+        }
+
+        // Knob
         let mut value = get(&mut self.get_set_value);
         let angle = self.angle_for_value(value);
         draw_knob(ui, center, angle, self.knob_radius);
@@ -320,9 +362,7 @@ impl Widget for Dial<'_> {
                             }
                         }
                     }
-
-
-                },
+                }
             }
 
             if let Some(max) = self.max_value {
@@ -467,5 +507,34 @@ impl DialPosition {
     pub fn color(mut self, color: Color32) -> Self {
         self.color = Some(color);
         self
+    }
+}
+
+impl ScaleMarking {
+    /// Set the length of the line segments in the scale markings
+    pub fn with_length(mut self, length: f32) -> Self {
+        self.length = length;
+        self
+    }
+
+    /// Set the numeric interval between the markings
+    pub fn with_interval<Num: Numeric>(mut self, interval: Num) -> Self {
+        self.interval = interval.to_f64();
+        self
+    }
+
+    pub fn with_stroke(mut self, stroke: Stroke) -> Self {
+        self.stroke = Some(stroke);
+        self
+    }
+}
+
+impl Default for ScaleMarking {
+    fn default() -> Self {
+        Self {
+            length: 10.0,
+            interval: 1.0,
+            stroke: None,
+        }
     }
 }

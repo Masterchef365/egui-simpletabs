@@ -1,6 +1,6 @@
 use egui::{Color32, ComboBox, DragValue, global_theme_preference_buttons};
 use egui_simpletabs::{
-    dial::{Dial, DialPosition, DragMode},
+    dial::{Dial, DialPosition, DragMode, ScaleMarking},
     utils::IndecisiveOption,
 };
 
@@ -77,7 +77,11 @@ fn main() {
                 ui.horizontal(|ui| {
                     ui.label("Snap: ");
                     snap.show(ui, |ui, snap_thresh| {
-                        ui.add(DragValue::new(snap_thresh).prefix("Tolerance: ").speed(1e-2))
+                        ui.add(
+                            DragValue::new(snap_thresh)
+                                .prefix("Tolerance: ")
+                                .speed(1e-2),
+                        )
                     });
                     //ui.checkbox(&mut has_snap, "Snap");
                     //ui.add_enabled(has_snap, DragValue::new(&mut snap_thresh).speed(1e-2));
@@ -117,6 +121,7 @@ fn main() {
                     .origin_value(origin_value)
                     .mouse_sensitivity(mouse_sensitivity)
                     .show_livezone(show_livezone)
+                    .with_scale_marking(ScaleMarking::default().with_interval(0.5))
                     .with_position(
                         DialPosition::new(0)
                             .label("Zero")
@@ -165,6 +170,7 @@ fn main() {
                     .origin_value(origin_value)
                     .mouse_sensitivity(mouse_sensitivity * 20.0)
                     .show_livezone(show_livezone)
+                    .with_scale_marking(ScaleMarking::default().with_interval(1.0))
                     .with_position(
                         DialPosition::new(0)
                             .label("Zero")
@@ -200,7 +206,6 @@ fn main() {
                 ui.add(dial);
                 ui.add(DragValue::new(&mut value_int).speed(1e-2));
             });
-
 
             ui.group(|ui| {
                 ui.heading("Dial (positional values)");
