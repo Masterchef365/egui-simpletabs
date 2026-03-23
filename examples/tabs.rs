@@ -1,4 +1,4 @@
-use egui::global_theme_preference_buttons;
+use egui::{Layout, global_theme_preference_buttons};
 use egui_simpletabs::tabs::TabWidgetExt;
 
 #[derive(Default, Clone, Copy, PartialEq)]
@@ -21,8 +21,11 @@ fn main() {
             ui.horizontal(|ui| {
                 ui.add_tab(&mut tab, Tabs::Home, "Home");
                 ui.add_tab(&mut tab, Tabs::TabOne, "TabOne");
-                ui.add_tab(&mut tab, Tabs::TabTwo, "TabTwo");
-                ui.cap_tabs();
+
+                ui.with_layout(Layout::right_to_left(Default::default()), |ui| {
+                    ui.add_tab(&mut tab, Tabs::TabTwo, "TabTwo");
+                    ui.cap_tabs();
+                });
             });
 
             match tab {

@@ -10,6 +10,7 @@ pub struct TabWidget {
 }
 
 pub trait TabWidgetExt {
+    /// Add selectable tab to the ui. Similar to selectable_label, but with a tab shape.
     fn add_tab<Value: PartialEq>(
         &mut self,
         current_value: &mut Value,
@@ -17,6 +18,7 @@ pub trait TabWidgetExt {
         text: impl Into<WidgetText>,
     ) -> Response;
 
+    /// Draw a line to visually cap the tabs. Should be called after the last tab in a row.
     fn cap_tabs(&mut self);
 }
 
@@ -48,6 +50,7 @@ impl TabWidgetExt for Ui {
 }
 
 impl TabWidget {
+    /// Create a new tab widget. `selected` controls whether the tab is selected, and `text` is the label of the tab.
     pub fn new(selected: bool, text: impl Into<WidgetText>) -> Self {
         Self {
             selected,
