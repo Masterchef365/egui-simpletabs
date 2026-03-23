@@ -2,10 +2,10 @@
 use std::ops::RangeInclusive;
 
 use egui::{
-    Color32, Painter, Pos2, Rect, Response, Sense, Stroke, Ui, Vec2, Widget, emath::Numeric,
+    Color32, Painter, Pos2, Rect, Response, Sense, Shape, Stroke, Ui, Vec2, Widget, emath::Numeric, epaint::CubicBezierShape
 };
 
-use crate::utils::{circular_arc_stroke, throttle};
+use crate::utils::{circular_arc_bezier, circular_arc_stroke, throttle};
 
 type GetSetValue<'a> = Box<dyn 'a + FnMut(Option<f64>) -> f64>;
 fn get(get_set_value: &mut GetSetValue<'_>) -> f64 {
@@ -475,17 +475,72 @@ impl Widget for Dial<'_> {
 }
 
 fn draw_knob(ui: &Ui, center: Pos2, angle: f64, radius: f32) {
-    let stroke = ui.style().visuals.widgets.active.fg_stroke;
-    ui.painter().circle_stroke(center, radius, stroke.clone());
-
     let fill = ui.style().visuals.widgets.noninteractive.bg_stroke.color;
     ui.painter().circle_filled(center, radius, fill);
+
+    let stroke = ui.style().visuals.widgets.active.fg_stroke;
+    //ui.painter().circle_stroke(center, radius, stroke.clone());
+    draw_fancy_knob(ui.painter(), center, radius, angle as f32 + 0.0, angle as f32 + 6.28, 10, stroke);
 
     let f = |r: f32| center + Vec2::angled(angle as _) * r;
 
     ui.painter()
         .line_segment([f(radius / 2.0), f(radius)], stroke);
 }
+
+fn draw_fancy_knob(
+    painter: &Painter,
+    center: Pos2,
+    radius: f32,
+    begin_angle: f32,
+    end_angle: f32,
+    n_segments: usize,
+    stroke: Stroke,
+) {
+    let total_angle = end_angle - begin_angle;
+    let angle_step = total_angle / n_segments as f32;
+
+    let begin_angle = begin_angle - angle_step / 2.0;
+
+    for i in 0..n_segments {
+        let a1 = begin_angle + angle_step * i as f32;
+        let a2 = begin_angle + angle_step * (i + 1) as f32;
+        if i & 1 == 0 {
+            let points = circular_arc_bezier(
+                center,
+                radius,
+                a1,
+                a2,
+                angle_step,
+            );
+
+            let shape =
+                CubicBezierShape::from_points_stroke(points, false, Color32::TRANSPARENT, stroke);
+            painter.add(Shape::CubicBezier(shape));
+        } else {
+            let v1 = Vec2::angled(a1);
+            let p1 = center + v1 * radius;
+
+            let v2 = Vec2::angled(a2);
+            let p2 = center + v2 * radius;
+
+            let intrusion = 0.2;
+            let points = [
+                p1,
+                p1.lerp(center, intrusion),
+                p2.lerp(center, intrusion),
+                p2,
+            ];
+
+            let shape =
+                CubicBezierShape::from_points_stroke(points, false, Color32::TRANSPARENT, stroke);
+            painter.add(Shape::CubicBezier(shape));
+        }
+
+    }
+}
+
+
 
 impl DragMode {
     pub fn calculate_delta(&self, relpos: Vec2, drag_delta: Vec2) -> f32 {

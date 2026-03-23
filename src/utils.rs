@@ -53,7 +53,7 @@ fn circular_arc_beziers(
     })
 }
 
-fn circular_arc_bezier(
+pub fn circular_arc_bezier(
     center: Pos2,
     radius: f32,
     begin_angle: f32,
