@@ -560,7 +560,7 @@ impl DialPosition {
             value: value.to_f64(),
             snap: None,
             label: None,
-            underline: false,
+            underline: true,
             line_length: Some(20.0),
             color: None,
         }
@@ -661,5 +661,21 @@ impl KnobStyle {
 
         ui.painter()
             .line_segment([f(radius / 2.0), f(radius)], stroke);
+    }
+}
+
+pub fn choice<T: PartialEq + Clone>(ui: &mut Ui, value: &mut T, choices: &[(T, &'static str)]) {
+    let mut idx = choices.iter().position(|(v, _)| v == value).unwrap();
+    let spacing = 1.0;
+
+    let mut dial = Dial::new(&mut idx).value_per_radian(1.0 / spacing).turning_mode(TurningMode::Positional);
+    for (idx, (_key, label)) in choices.iter().enumerate() {
+        dial = dial.with_position(DialPosition::new(idx).label(*label));
+    }
+
+    let resp = ui.add(dial);
+
+    if resp.changed() {
+        *value = choices[idx].0.clone();
     }
 }
