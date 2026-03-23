@@ -230,7 +230,7 @@ fn main() {
                             .color(Color32::DARK_GREEN),
                     )
                     .with_position(
-                        DialPosition::new(1.2)
+                        DialPosition::new(1.5)
                             .label("1.5")
                             .snap(snap.into())
                             .underline(underline),

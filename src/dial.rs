@@ -357,19 +357,6 @@ impl Widget for Dial<'_> {
 
         let stroke = ui.style().visuals.widgets.active.fg_stroke;
 
-        // Arc around knob
-        if let (Some(min), Some(max), true) = (self.min_value, self.max_value, self.show_livezone) {
-            circular_arc_stroke(
-                ui.painter(),
-                center,
-                self.knob_radius + self.markings_offset,
-                self.angle_for_value(min) as f32,
-                self.angle_for_value(max) as f32,
-                1.0,
-                stroke,
-            );
-        }
-
         // Interaction with knob
         if let Some(mouse_pos) = knob_resp.interact_pointer_pos()
             && knob_resp.dragged()
@@ -491,6 +478,19 @@ impl Widget for Dial<'_> {
                     set(&mut self.get_set_value, value);
                 }
             }
+        }
+
+        // Arc around knob
+        if let (Some(min), Some(max), true) = (self.min_value, self.max_value, self.show_livezone) {
+            circular_arc_stroke(
+                ui.painter(),
+                center,
+                self.knob_radius + self.markings_offset,
+                self.angle_for_value(min) as f32,
+                self.angle_for_value(max) as f32,
+                1.0,
+                stroke,
+            );
         }
 
         ui.advance_cursor_after_rect(background_area);
