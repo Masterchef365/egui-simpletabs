@@ -29,6 +29,18 @@ pub struct DialPosition {
 }
 
 /// How a drag motion affects the knob
+#[derive(Copy, Clone, Debug, PartialEq)]
+pub enum KnobStyle {
+    Circular,
+    Fluted {
+        n_segments: usize,
+        /// 0 to 1
+        depth: f32,
+    },
+}
+
+
+/// How a drag motion affects the knob
 #[derive(Copy, Clone, Debug, Default, PartialEq, Eq)]
 pub enum DragMode {
     DistanceFromCenter,
@@ -116,6 +128,8 @@ pub struct Dial<'a> {
     pub turning_mode: TurningMode,
     /// How many discrete moves the dial may make per second
     pub throttle_turn_rate: f64,
+    /// Knob style
+    pub knob_style: KnobStyle,
     /// Scale markings
     scale_markings: Vec<ScaleMarking>,
     /// Marked dial positions
@@ -136,6 +150,7 @@ impl<'a> Dial<'a> {
     fn from_get_set<Num: Numeric>(get_set_value: impl 'a + FnMut(Option<f64>) -> f64) -> Self {
         let knob_radius: f32 = 25.0;
         Self {
+            knob_style: KnobStyle::default(),
             get_set_value: Box::new(get_set_value),
             mouse_sensitivity: match Num::INTEGRAL {
                 true => 1.0,
@@ -250,6 +265,12 @@ impl<'a> Dial<'a> {
         self
     }
 
+    /// How does the knob look?
+    pub fn knob_style(mut self, knob_style: KnobStyle) -> Self {
+        self.knob_style = knob_style;
+        self
+    }
+
     /// Shorthand for distributing the range of values between min and max, optionally avoiding
     /// 'deadzone' radians (leaving that as unreachable space between the max and min values)
     pub fn range<Num: Numeric>(self, range: RangeInclusive<Num>, deadzone: Option<f64>) -> Self {
@@ -321,7 +342,7 @@ impl Widget for Dial<'_> {
         // Knob
         let mut value = get(&mut self.get_set_value);
         let angle = self.angle_for_value(value);
-        draw_knob(ui, center, angle, self.knob_radius);
+        self.knob_style.draw(ui, center, angle, self.knob_radius);
 
         let knob_rect = Rect::from_center_size(
             center,
@@ -474,19 +495,6 @@ impl Widget for Dial<'_> {
     }
 }
 
-fn draw_knob(ui: &Ui, center: Pos2, angle: f64, radius: f32) {
-    let fill = ui.style().visuals.widgets.noninteractive.bg_stroke.color;
-    ui.painter().circle_filled(center, radius, fill);
-
-    let stroke = ui.style().visuals.widgets.active.fg_stroke;
-    //ui.painter().circle_stroke(center, radius, stroke.clone());
-    draw_fancy_knob(ui.painter(), center, radius, angle as f32 + 0.0, angle as f32 + 6.28, 10, stroke);
-
-    let f = |r: f32| center + Vec2::angled(angle as _) * r;
-
-    ui.painter()
-        .line_segment([f(radius / 2.0), f(radius)], stroke);
-}
 
 fn draw_fancy_knob(
     painter: &Painter,
@@ -495,6 +503,7 @@ fn draw_fancy_knob(
     begin_angle: f32,
     end_angle: f32,
     n_segments: usize,
+    depth: f32,
     stroke: Stroke,
 ) {
     let total_angle = end_angle - begin_angle;
@@ -524,11 +533,10 @@ fn draw_fancy_knob(
             let v2 = Vec2::angled(a2);
             let p2 = center + v2 * radius;
 
-            let intrusion = 0.2;
             let points = [
                 p1,
-                p1.lerp(center, intrusion),
-                p2.lerp(center, intrusion),
+                p1.lerp(center, depth),
+                p2.lerp(center, depth),
                 p2,
             ];
 
@@ -623,5 +631,35 @@ impl Default for ScaleMarking {
             interval: 1.0,
             stroke: None,
         }
+    }
+}
+
+impl Default for KnobStyle {
+    fn default() -> Self {
+        Self::Fluted { n_segments: 12, depth: 0.1 }
+    }
+}
+
+impl KnobStyle {
+    pub fn draw(&self, ui: &Ui, center: Pos2, angle: f64, radius: f32) {
+        let fill = ui.style().visuals.widgets.noninteractive.bg_stroke.color;
+        ui.painter().circle_filled(center, radius, fill);
+
+        let stroke = ui.style().visuals.widgets.active.fg_stroke;
+
+        match self {
+            KnobStyle::Circular => {
+                ui.painter().circle_stroke(center, radius, stroke.clone());
+            },
+            KnobStyle::Fluted { n_segments, depth } => {
+                draw_fancy_knob(ui.painter(), center, radius, angle as f32 + 0.0, angle as f32 + std::f32::consts::TAU, *n_segments, *depth, stroke);
+            }
+        }
+
+
+        let f = |r: f32| center + Vec2::angled(angle as _) * r;
+
+        ui.painter()
+            .line_segment([f(radius / 2.0), f(radius)], stroke);
     }
 }
