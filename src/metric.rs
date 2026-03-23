@@ -17,6 +17,18 @@ const fn first_prefix_exp() -> i32 {
 
 /// Display the given value with the given unit, appropriately prefixed according to magnitude
 pub fn to_metric_prefix(value: f64, unit: impl std::fmt::Display) -> String {
+    if let Some((prefix, value)) = try_to_metric_prefix(value) {
+        format!("{:.3} {prefix}{unit}", value)
+    } else {
+        format!("{:.3} {unit}", value) // Fallback in case exponent is out of range
+    }
+}
+
+pub fn try_to_metric_prefix(value: f64) -> Option<(&'static str, f64)> {
+    if !value.is_normal() {
+        return None;
+    }
+
     let exp10 = (value.abs().log10() / 3.0).floor() as i32;
 
     let exponent = exp10 * 3;
@@ -27,11 +39,7 @@ pub fn to_metric_prefix(value: f64, unit: impl std::fmt::Display) -> String {
         .then(|| idx as usize)
         .and_then(|i| PREFIXES.get(i));
 
-    if let Some(prefix) = prefix {
-        format!("{:.3} {prefix}{unit}", value / 10_f64.powi(exponent))
-    } else {
-        format!("{:.3} {unit}", value) // Fallback in case exponent is out of range
-    }
+    prefix.map(|prefix| (*prefix, value / 10_f64.powi(exponent)))
 }
 
 /// Extracts the float value for the string (using the given unit)
