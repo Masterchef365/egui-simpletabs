@@ -2,7 +2,8 @@
 use std::ops::RangeInclusive;
 
 use egui::{
-    Color32, Painter, Pos2, Rect, Response, Sense, Shape, Stroke, Ui, Vec2, Widget, emath::Numeric, epaint::CubicBezierShape
+    Color32, Painter, Pos2, Rect, Response, Sense, Shape, Stroke, Ui, Vec2, Widget, emath::Numeric,
+    epaint::CubicBezierShape,
 };
 
 use crate::utils::{circular_arc_bezier, circular_arc_stroke, throttle};
@@ -38,7 +39,6 @@ pub enum KnobStyle {
         depth: f32,
     },
 }
-
 
 /// How a drag motion affects the knob
 #[derive(Copy, Clone, Debug, Default, PartialEq, Eq)]
@@ -96,7 +96,7 @@ pub struct ScaleMarking {
 ///             .snap(snap.into())
 ///             .underline(underline),
 ///     );
-/// 
+///
 /// ui.add(dial);
 /// ```
 pub struct Dial<'a> {
@@ -332,7 +332,9 @@ impl Widget for Dial<'_> {
 
                     let p_inner = center + Vec2::angled(angle as _) * r_inner;
                     let p_outer = center + Vec2::angled(angle as _) * r_outer;
-                    let stroke = marking.stroke.unwrap_or(ui.style().visuals.widgets.noninteractive.fg_stroke);
+                    let stroke = marking
+                        .stroke
+                        .unwrap_or(ui.style().visuals.widgets.noninteractive.fg_stroke);
 
                     ui.painter().line_segment([p_inner, p_outer], stroke);
                 }
@@ -495,7 +497,6 @@ impl Widget for Dial<'_> {
     }
 }
 
-
 fn draw_fancy_knob(
     painter: &Painter,
     center: Pos2,
@@ -515,13 +516,7 @@ fn draw_fancy_knob(
         let a1 = begin_angle + angle_step * i as f32;
         let a2 = begin_angle + angle_step * (i + 1) as f32;
         if i & 1 == 0 {
-            let points = circular_arc_bezier(
-                center,
-                radius,
-                a1,
-                a2,
-                angle_step,
-            );
+            let points = circular_arc_bezier(center, radius, a1, a2, angle_step);
 
             let shape =
                 CubicBezierShape::from_points_stroke(points, false, Color32::TRANSPARENT, stroke);
@@ -533,22 +528,14 @@ fn draw_fancy_knob(
             let v2 = Vec2::angled(a2);
             let p2 = center + v2 * radius;
 
-            let points = [
-                p1,
-                p1.lerp(center, depth),
-                p2.lerp(center, depth),
-                p2,
-            ];
+            let points = [p1, p1.lerp(center, depth), p2.lerp(center, depth), p2];
 
             let shape =
                 CubicBezierShape::from_points_stroke(points, false, Color32::TRANSPARENT, stroke);
             painter.add(Shape::CubicBezier(shape));
         }
-
     }
 }
-
-
 
 impl DragMode {
     pub fn calculate_delta(&self, relpos: Vec2, drag_delta: Vec2) -> f32 {
@@ -636,7 +623,10 @@ impl Default for ScaleMarking {
 
 impl Default for KnobStyle {
     fn default() -> Self {
-        Self::Fluted { n_segments: 12, depth: 0.1 }
+        Self::Fluted {
+            n_segments: 12,
+            depth: 0.1,
+        }
     }
 }
 
@@ -650,12 +640,20 @@ impl KnobStyle {
         match self {
             KnobStyle::Circular => {
                 ui.painter().circle_stroke(center, radius, stroke.clone());
-            },
+            }
             KnobStyle::Fluted { n_segments, depth } => {
-                draw_fancy_knob(ui.painter(), center, radius, angle as f32 + 0.0, angle as f32 + std::f32::consts::TAU, *n_segments, *depth, stroke);
+                draw_fancy_knob(
+                    ui.painter(),
+                    center,
+                    radius,
+                    angle as f32 + 0.0,
+                    angle as f32 + std::f32::consts::TAU,
+                    *n_segments,
+                    *depth,
+                    stroke,
+                );
             }
         }
-
 
         let f = |r: f32| center + Vec2::angled(angle as _) * r;
 
