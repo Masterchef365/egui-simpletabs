@@ -324,9 +324,11 @@ impl Widget for Dial<'_> {
         if let (Some(min), Some(max)) = (self.min_value, self.max_value) {
             for marking in &self.scale_markings {
                 let n = ((max - min) / marking.interval).floor() as usize;
+
+                let offset = (min / marking.interval).ceil() * marking.interval;
+
                 for i in 0..n {
-                    let t = i as f64 / n as f64;
-                    let angle = self.angle_for_value(min + (max - min) * t);
+                    let angle = self.angle_for_value(offset + marking.interval * i as f64);
                     let r_inner = self.knob_radius + self.markings_offset;
                     let r_outer = r_inner + marking.length;
 
