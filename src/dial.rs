@@ -59,6 +59,34 @@ pub struct ScaleMarking {
 }
 
 /// A Dial widget
+/// ```rust
+/// let dial = Dial::new(&mut value)
+///     .drag_mode(drag_mode)
+///     .value_per_radian(value_per_radian)
+///     .min_value(min.into_option())
+///     .max_value(max.into_option())
+///     .invert(invert)
+///     .origin_angle(origin_angle)
+///     .origin_value(origin_value)
+///     .mouse_sensitivity(mouse_sensitivity)
+///     .show_livezone(show_livezone)
+///     .with_scale_marking(ScaleMarking::default().with_interval(0.5))
+///     .with_position(
+///         DialPosition::new(0)
+///             .label("Zero")
+///             .snap(snap.into())
+///             .underline(underline)
+///             .color(Color32::DARK_GREEN),
+///     )
+///     .with_position(
+///         DialPosition::new(1)
+///             .label("One")
+///             .snap(snap.into())
+///             .underline(underline),
+///     );
+/// 
+/// ui.add(dial);
+/// ```
 pub struct Dial<'a> {
     get_set_value: GetSetValue<'a>,
     /// Change in angle (in radians) per change in mouse position
