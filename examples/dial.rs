@@ -171,6 +171,7 @@ fn main() {
                     .mouse_sensitivity(mouse_sensitivity * 20.0)
                     .show_livezone(show_livezone)
                     .with_scale_marking(ScaleMarking::default().with_interval(1.0))
+                    .knob_style(egui_simpletabs::dial::KnobStyle::Circular)
                     .with_position(
                         DialPosition::new(0)
                             .label("Zero")
@@ -220,6 +221,7 @@ fn main() {
                     .mouse_sensitivity(mouse_sensitivity * 20.0)
                     .show_livezone(show_livezone)
                     .turning_mode(egui_simpletabs::dial::TurningMode::Positional)
+                    .knob_style(egui_simpletabs::dial::KnobStyle::Fluted { n_segments: 18, depth: 0.1 })
                     .with_position(
                         DialPosition::new(0)
                             .label("Zero")
