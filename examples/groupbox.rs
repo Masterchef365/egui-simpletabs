@@ -4,7 +4,7 @@ use egui_simpletabs::groupbox::{FrameGroupBoxExt, GroupBox, UiGroupBoxExt};
 fn main() {
     let mut label = String::from("Test box");
     let mut scene_rect = egui::Rect::ZERO;
-    eframe::run_simple_native("Button test", Default::default(), move |ctx, _frame| {
+    eframe::run_simple_native("GroupBox test", Default::default(), move |ctx, _frame| {
         egui::CentralPanel::default().show(ctx, |ui| {
             ui.text_edit_singleline(&mut label);
             global_theme_preference_buttons(ui);
