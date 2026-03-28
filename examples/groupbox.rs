@@ -1,4 +1,4 @@
-use egui::{Color32, Stroke, global_theme_preference_buttons, global_theme_preference_switch};
+use egui::{global_theme_preference_buttons, global_theme_preference_switch, Color32, Stroke};
 use egui_simpletabs::groupbox::FrameGroupBoxExt;
 
 fn main() {
@@ -10,16 +10,24 @@ fn main() {
             ui.text_edit_singleline(&mut label);
             global_theme_preference_buttons(ui);
 
-            let resp = egui::Frame::group(ui.style()).groupbox(&label).text_color(Color32::RED).stroke(Stroke::new(0.5, Color32::RED)).show(ui, |ui| {
-                ui.label("This statement is false or whatever");
-            });
-
-            egui::Scene::new().zoom_range(0.01..=100.0).show(ui, &mut scene_rect, |ui| {
-                let resp = egui::Frame::group(ui.style()).groupbox(&label).show(ui, |ui| {
+            egui::Frame::group(ui.style())
+                .fill(Color32::BLUE)
+                .groupbox(&label)
+                .text_color(Color32::RED)
+                .stroke(Stroke::new(0.5, Color32::RED))
+                .show(ui, |ui| {
                     ui.label("This statement is false or whatever");
                 });
-            });
 
+            egui::Scene::new()
+                .zoom_range(0.01..=100.0)
+                .show(ui, &mut scene_rect, |ui| {
+                    egui::Frame::group(ui.style())
+                        .groupbox(&label)
+                        .show(ui, |ui| {
+                            ui.label("This statement is false or whatever");
+                        });
+                });
         });
     })
     .unwrap();
