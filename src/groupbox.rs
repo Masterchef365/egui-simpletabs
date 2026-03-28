@@ -1,8 +1,7 @@
-use std::f32::consts::{FRAC_PI_2, PI};
+use std::f32::consts::FRAC_PI_2;
 
 use egui::{
-    Color32, CornerRadius, InnerResponse, Pos2, Response, Stroke, Style, TextStyle, Ui, Vec2,
-    WidgetText,
+    Color32, CornerRadius, InnerResponse, Pos2, Stroke, Style, Ui, Vec2,
 };
 
 use crate::utils::circular_arc_stroke;
@@ -15,16 +14,23 @@ pub struct GroupBox {
 }
 
 impl GroupBox {
-    pub fn new(label: String) -> Self {
-        Self::from_frame(egui::Frame::default(), label)
+    pub fn new(style: &Style, label: impl Into <String>) -> Self {
+        Self::from_frame(egui::Frame::default(), style, label)
     }
 
-    pub fn from_frame(frame: egui::Frame, label: impl Into<String>) -> Self {
+    pub fn from_frame(frame: egui::Frame, style: &Style, label: impl Into<String>) -> Self {
         // Allow enough margin height for the text
         let height = egui::FontId::default().size;
         let mut margin = frame.outer_margin;
         margin.top = margin.top.max(height as i8);
+
         let frame = frame.outer_margin(margin);
+
+        // Same as frame.group()
+        let frame = frame
+            .inner_margin(6)
+            .corner_radius(style.visuals.widgets.noninteractive.corner_radius)
+            .stroke(style.visuals.widgets.noninteractive.bg_stroke);
 
         Self {
             frame,
@@ -146,11 +152,37 @@ impl GroupBox {
 }
 
 pub trait FrameGroupBoxExt {
-    fn groupbox(self, label: impl Into<String>) -> GroupBox;
+    fn group_box(self, style: &Style, label: impl Into<String>) -> GroupBox;
 }
 
 impl FrameGroupBoxExt for egui::Frame {
-    fn groupbox(self, label: impl Into<String>) -> GroupBox {
-        GroupBox::from_frame(self, label)
+    fn group_box(self, style: &Style, label: impl Into<String>) -> GroupBox {
+        GroupBox::from_frame(self, style, label)
     }
+}
+
+pub trait UiGroupBoxExt {
+    fn group_box<R>(
+        self,
+        label: impl Into<String>,
+        add_contents: impl FnOnce(&mut Ui) -> R,
+    ) -> InnerResponse<R>;
+}
+
+impl UiGroupBoxExt for &mut Ui {
+    fn group_box<R>(
+        self,
+        label: impl Into<String>,
+        add_contents: impl FnOnce(&mut Ui) -> R,
+    ) -> InnerResponse<R> {
+        GroupBox::new(self.style(), label.into()).show(self, add_contents)
+    }
+}
+
+pub fn group_box<R>(
+    ui: &mut Ui, 
+    label: impl Into<String>, 
+    add_contents: impl FnOnce(&mut Ui) -> R,
+    ) -> InnerResponse<R> {
+    ui.group_box(label, add_contents)
 }
