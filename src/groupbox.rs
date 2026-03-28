@@ -1,3 +1,4 @@
+//! A Win32-like GroupBox element; wraps an egui::Frame
 use std::f32::consts::FRAC_PI_2;
 
 use egui::{
