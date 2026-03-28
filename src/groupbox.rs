@@ -1,7 +1,8 @@
 use std::f32::consts::{FRAC_PI_2, PI};
 
 use egui::{
-    Color32, CornerRadius, InnerResponse, Response, Stroke, Style, TextStyle, Ui, Vec2, WidgetText,
+    Color32, CornerRadius, InnerResponse, Pos2, Response, Stroke, Style, TextStyle, Ui, Vec2,
+    WidgetText,
 };
 
 use crate::utils::circular_arc_stroke;
@@ -10,6 +11,7 @@ pub struct GroupBox {
     frame: egui::Frame,
     label: String,
     text_color: Option<Color32>,
+    text_margin: f32,
 }
 
 impl GroupBox {
@@ -18,7 +20,7 @@ impl GroupBox {
     }
 
     pub fn from_frame(frame: egui::Frame, label: impl Into<String>) -> Self {
-        // Allow enough height for the text
+        // Allow enough margin height for the text
         let height = egui::FontId::default().size;
         let mut margin = frame.outer_margin;
         margin.top = margin.top.max(height as i8);
@@ -28,11 +30,23 @@ impl GroupBox {
             frame,
             label: label.into(),
             text_color: None,
+            text_margin: 10.0,
         }
     }
 
-    pub fn text_color(mut self, text_color: Color32) {
+    pub fn text_margin(mut self, margin: f32) -> Self {
+        self.text_margin = margin;
+        self
+    }
+
+    pub fn text_color(mut self, text_color: Color32) -> Self {
         self.text_color = Some(text_color);
+        self
+    }
+
+    pub fn stroke(mut self, stroke: Stroke) -> Self {
+        self.frame.stroke = stroke;
+        self
     }
 
     pub fn show<R>(self, ui: &mut Ui, add_contents: impl FnOnce(&mut Ui) -> R) -> InnerResponse<R> {
@@ -40,22 +54,26 @@ impl GroupBox {
         let frame = self.frame.clone().stroke(Stroke::NONE);
         let corners = frame.corner_radius;
 
-        // Add
+        // Add inside of widget
         let mut prepared = frame.begin(ui);
         let ret = add_contents(&mut prepared.content_ui);
-        let widget_rect = prepared.frame.widget_rect(prepared.content_ui.min_rect());
+        let mut widget_rect = prepared.frame.widget_rect(prepared.content_ui.min_rect());
         let response = prepared.end(ui);
 
         let painter = ui.painter();
 
+        // Add text
         let text_color = self.get_text_color(ui.style());
         let text_rect = painter.text(
-            widget_rect.min,
+            widget_rect.min + Vec2::X * self.text_margin,
             egui::Align2::LEFT_BOTTOM,
             &self.label,
             Default::default(),
             text_color,
         );
+
+        // Make the outline 'intersect' the text
+        widget_rect.min.y -= text_rect.height() / 2.0;
 
         let stroke = self.frame.stroke;
         let w2 = stroke.width / 2.0;
@@ -69,24 +87,47 @@ impl GroupBox {
         let bl_radius = self.frame.corner_radius.sw as f32;
         let br_radius = self.frame.corner_radius.se as f32;
 
-        painter.line_segment([tl + Vec2::X * tl_radius, tr - Vec2::X * tr_radius], stroke);
+        painter.line_segment(
+            [
+                tl + Vec2::X * tl_radius,
+                Pos2::new((text_rect.min.x - self.text_margin / 4.0).min(tr.x), tl.y),
+            ],
+            stroke,
+        );
+        painter.line_segment(
+            [
+                Pos2::new((text_rect.max.x + self.text_margin / 4.0).min(tr.x), tl.y),
+                tr - Vec2::X * tr_radius,
+            ],
+            stroke,
+        );
 
-        let ninety = FRAC_PI_2;
-        for (start, stop, coord) in [
-            (ninety * 2.0, ninety * 3.0, tl + Vec2::new(corners.nw as f32, corners.nw as f32)),
-            (ninety * 3.0, ninety * 4.0, tr + Vec2::new(-(corners.ne as f32), corners.ne as f32)),
-            (ninety * 1.0, ninety * 2.0, bl + Vec2::new(corners.sw as f32, -(corners.sw as f32))),
-            (ninety * 0.0, ninety * 1.0, br + Vec2::new(-(corners.se as f32), -(corners.se as f32))),
-        ] {
-            circular_arc_stroke(
-                painter,
-                coord,
-                corners.nw as _,
-                start,
-                stop,
-                1.0,
-                stroke,
-            );
+        if corners != CornerRadius::ZERO {
+            let ninety = FRAC_PI_2;
+            for (start, stop, coord) in [
+                (
+                    ninety * 2.0,
+                    ninety * 3.0,
+                    tl + Vec2::new(corners.nw as f32, corners.nw as f32),
+                ),
+                (
+                    ninety * 3.0,
+                    ninety * 4.0,
+                    tr + Vec2::new(-(corners.ne as f32), corners.ne as f32),
+                ),
+                (
+                    ninety * 1.0,
+                    ninety * 2.0,
+                    bl + Vec2::new(corners.sw as f32, -(corners.sw as f32)),
+                ),
+                (
+                    ninety * 0.0,
+                    ninety * 1.0,
+                    br + Vec2::new(-(corners.se as f32), -(corners.se as f32)),
+                ),
+            ] {
+                circular_arc_stroke(painter, coord, corners.nw as _, start, stop, 1.0, stroke);
+            }
         }
 
         painter.line_segment([bl + Vec2::X * bl_radius, br - Vec2::X * br_radius], stroke);
