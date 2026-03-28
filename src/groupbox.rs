@@ -19,18 +19,22 @@ impl GroupBox {
     }
 
     pub fn from_frame(frame: egui::Frame, style: &Style, label: impl Into<String>) -> Self {
+        // Same as frame.group()
+        let frame = frame
+            .inner_margin(6)
+            .corner_radius(style.visuals.widgets.noninteractive.corner_radius)
+            .stroke(style.visuals.widgets.noninteractive.bg_stroke);
+
+        Self::from_frame_raw(frame, label)
+    }
+
+    pub fn from_frame_raw(frame: egui::Frame, label: impl Into<String>) -> Self {
         // Allow enough margin height for the text
         let height = egui::FontId::default().size;
         let mut margin = frame.outer_margin;
         margin.top = margin.top.max(height as i8);
 
         let frame = frame.outer_margin(margin);
-
-        // Same as frame.group()
-        let frame = frame
-            .inner_margin(6)
-            .corner_radius(style.visuals.widgets.noninteractive.corner_radius)
-            .stroke(style.visuals.widgets.noninteractive.bg_stroke);
 
         Self {
             frame,
@@ -152,12 +156,12 @@ impl GroupBox {
 }
 
 pub trait FrameGroupBoxExt {
-    fn group_box(self, style: &Style, label: impl Into<String>) -> GroupBox;
+    fn group_box(self, label: impl Into<String>) -> GroupBox;
 }
 
 impl FrameGroupBoxExt for egui::Frame {
-    fn group_box(self, style: &Style, label: impl Into<String>) -> GroupBox {
-        GroupBox::from_frame(self, style, label)
+    fn group_box(self, label: impl Into<String>) -> GroupBox {
+        GroupBox::from_frame_raw(self, label)
     }
 }
 

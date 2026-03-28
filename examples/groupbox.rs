@@ -15,7 +15,9 @@ fn main() {
 
             egui::Frame::group(ui.style())
                 .fill(Color32::BLUE)
-                .group_box(ui.style(), &label)
+                .outer_margin(30.0)
+                .inner_margin(30.0)
+                .group_box(&label)
                 .text_color(Color32::RED)
                 .stroke(Stroke::new(0.5, Color32::RED))
                 .show(ui, |ui| {
