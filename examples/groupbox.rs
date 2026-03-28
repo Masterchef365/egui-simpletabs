@@ -15,6 +15,7 @@ fn main() {
 
             egui::Frame::group(ui.style())
                 .fill(Color32::BLUE)
+                .corner_radius(30.0)
                 .outer_margin(30.0)
                 .inner_margin(30.0)
                 .group_box(&label)

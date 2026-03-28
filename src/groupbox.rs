@@ -40,7 +40,7 @@ impl GroupBox {
             frame,
             label: label.into(),
             text_color: None,
-            text_margin: 10.0,
+            text_margin: 5.0,
         }
     }
 
@@ -75,7 +75,7 @@ impl GroupBox {
         // Add text
         let text_color = self.get_text_color(ui.style());
         let text_rect = painter.text(
-            widget_rect.min + Vec2::X * self.text_margin,
+            widget_rect.min + Vec2::X * (self.text_margin + corners.nw as f32),
             egui::Align2::LEFT_BOTTOM,
             &self.label,
             Default::default(),
