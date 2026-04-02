@@ -9,8 +9,10 @@ fn main() {
             ui.text_edit_singleline(&mut label);
             global_theme_preference_buttons(ui);
 
-            ui.group_box("This is a group box", |ui| {
-                ui.label("And it has stuff in it");
+            ui.add_space(30.0);
+
+            ui.group_box("Hello egui", |ui| {
+                ui.label("Welcome back to 2008");
             });
 
             egui::Frame::group(ui.style())

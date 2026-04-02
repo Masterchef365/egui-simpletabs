@@ -78,14 +78,14 @@ pub fn from_metric_prefix<'s>(s: &'s str, unit: &str) -> Result<f64, ()> {
 /// Adds parsers and formatters to a DragValue for the metric prefix
 pub fn metric_prefix_dragvalue<'a>(
     drag: egui::DragValue<'a>,
-    unit: &'static str,
+    unit: &'a str,
 ) -> egui::DragValue<'a> {
     drag.custom_parser(move |s| from_metric_prefix(s, unit).ok())
         .custom_formatter(move |value, _| to_metric_prefix(value, unit))
 }
 
 /// Shorthand for metric_prefix_dragvalue() with the default DragValue
-pub fn edit_metric_f64<'v>(value: &'v mut f64, unit: &'static str) -> egui::DragValue<'v> {
+pub fn edit_metric_f64<'v>(value: &'v mut f64, unit: &'v str) -> egui::DragValue<'v> {
     let speed = *value / 1000.0;
     metric_prefix_dragvalue(egui::DragValue::new(value).speed(speed), unit)
 }
